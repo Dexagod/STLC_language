@@ -116,19 +116,14 @@ class Record(Term):
     def get_values(self):
         return self.vals
   
-class Variant(Term):
+class Tag(Term):
     def __init__(self, label, term, as_type):
         self.label = label
         self.term = term
         self.as_type = as_type
-
     
     def __str__(self):
-        string = "{"
-        for key in self.vals:
-            string += str(key) + " : " + str(self.vals[key]) + ", "
-        string = string[:-2] + "}"
-        return string
+        return "<" + str(self.label) + "=" + str(self.term) + "> as " + str(self.as_type)
 
     def __eq__(self, other):
         return (type(other) == type(self)) and other.label == self.label and other.term == self.term and other.as_type == self.as_type
@@ -141,6 +136,26 @@ class Variant(Term):
     
     def get_as_type(self):
         return self.as_type
+
+class Case(Term):
+    def __init__(self, term, mapping):
+        self.term = term
+        self.mapping = mapping
+    
+    def __str__(self):
+        string = "case " + str(self.term) + " of [" 
+        for key in self.mapping:
+            string += "( " + key + " => " + self.mapping[key] + " ), "
+        return string[:-2] + "]" 
+
+    def __eq__(self, other):
+        return type(other) == type(self) and other.term == self.term and other.mapping == self.mapping
+
+    def get_term(self):
+        return self.term
+    
+    def get_mapping(self):
+        return self.mapping
 
 
 class Type: pass
@@ -238,11 +253,11 @@ def typecheck_exp(exp, context):
                 record_type.set_type(key, typecheck_exp(value_dict[key], context))
         return record_type
     
-    elif exp_class == Variant:
+    elif exp_class == Tag:
         if not issubclass(exp.get_as_type(), Type):
-            raise Exception("Variant " + str(exp) + " did not receive a correct type")
+            raise Exception("Tag " + str(exp) + " did not receive a correct type")
         elif not type(exp.get_label()) != Const:
-            raise Exception("Variant " + str(exp) + " did not receive a Const as label")
+            raise Exception("Tag " + str(exp) + " did not receive a Const as label")
         
         
 
@@ -284,7 +299,7 @@ def eval_exp(exp):
             exp.set_value(key, new_value)
         return exp
     
-    elif exp_class == Variant:
+    elif exp_class == Tag:
         # print("E-PROJ + E-RCD")
         for key in exp.get_values():
             new_value = eval_exp(exp.get_value(key))
