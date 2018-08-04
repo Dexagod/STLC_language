@@ -142,9 +142,6 @@ class Tag(Term):
     
     def get_label(self):
         return self.subtype_label
-
-    def get_term(self):
-        return self.term
     
     def get_as_type(self):
         return self.as_type
@@ -164,11 +161,6 @@ class Case(Term):
     def __eq__(self, other):
         return type(other) == type(self) and other.tag == self.tag and other.mapping == self.mapping
 
-    def get_tag(self):
-        return self.tag
-    
-    def get_mapping(self):
-        return self.mapping
 
 class Map(Term):
     def __init__(self, subtype_label, record, record_label):
@@ -184,6 +176,16 @@ class Map(Term):
     
     def __hash__(self):
         return str(str(self.subtype_label) + str(self.record_label)).__hash__()
+
+class Fix(Term):
+    def __init__(self, term):
+        self.term = term
+
+    def __str__(self):
+        return "fix " + str(self.term) 
+
+    def __eq__(self, other):
+        return (type(other) == type(self)) and other.term == self.term
 
 class Type: pass    
 
