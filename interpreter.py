@@ -187,6 +187,21 @@ class Fix(Term):
     def __eq__(self, other):
         return (type(other) == type(self)) and other.term == self.term
 
+class IF(Term):
+    def __init__(self, cond, then, _else):
+        self.cond = cond
+        self.then = then
+        self._else = _else
+
+    def __str__(self):
+        return "fix " + str(self.term) 
+
+    def __eq__(self, other):
+        return type(other) == type(self) and self.__dict__ == other.__dict__
+
+
+
+
 class Type: pass    
 
 class SType(Type):
@@ -337,7 +352,14 @@ def typecheck_exp(exp, context):
             string = str("Application " + str(exp) + " types do not match: left_type = " + str(t_abs) + " | right_type = " + str(t_arg))
             raise Exception(string)
         return t_abs.right
-    
+
+    elif exp_class == Fix:
+        term_type = typecheck_exp(exp.term, context)
+        if type(term_type) != CType:
+            raise Exception("Fix argument has type " + str(type(exp.term)) + " instead of a type T->T")
+        if term_type.left != term_type.right:
+            raise Exception("Fix argument left type " + str(term_type.left) + " does not match the right type " + str(term_type.right))
+        return term_type.right
 
 def eval_exp(exp):
     
@@ -392,7 +414,14 @@ def eval_exp(exp):
             return eval_exp(Proj(tag.term, record_label))
         else:
             return exp
-        
+    
+    elif exp_class == Fix:
+        if type(exp.term) != Abs:
+            raise Exception("Fix body is an: " + str(type(exp.term)) + " instead of an Abs")
+        else:
+            t2 = exp.term.body
+            substituted_term = application_substitution(t2, exp.term.param, exp) # TODO:: deepcopy of exp
+            return substituted_term
 
     #  NAKIJKEN OF VOLDOET AAN DE REGELS
     elif exp_class == App:
@@ -444,7 +473,7 @@ def application_substitution(abstraction_body, abstraction_param, arg):
     if type(abstraction_body) is Var:
         if abstraction_body == abstraction_param:
             print("SUBSTITUTED", " - " , abstraction_body, " - " , arg)
-            return arg
+            return arg # TODO:: deepcopy
         else:
             # print("SUBST - VAR - NO")
             return abstraction_body
@@ -456,20 +485,27 @@ def application_substitution(abstraction_body, abstraction_param, arg):
         return abstraction_body
 
     if type(abstraction_body) is Proj:
+        # E-PROJ
         abstraction_body.record = application_substitution(abstraction_body.record, abstraction_param, arg)
         return abstraction_body
     
     # TODO:: RULES FOR VARIANTS NEED TO BE ADDED
     if type(abstraction_body) is Tag:
+        # E-Variant
         abstraction_body.term = application_substitution(abstraction_body.term, abstraction_param, arg)
         return abstraction_body
     
     if type(abstraction_body) is Case:
+        # E-CASE
         abstraction_body.tag = application_substitution(abstraction_body.tag, abstraction_param, arg)
         return abstraction_body
 
+    elif type(abstraction_body) is Fix:
+        # E-FIX
+        abstraction_body.term = substituted_value(abstraction_body.term, abstraction_param, arg)
+
     elif type(abstraction_body) is Abs:
-        # print("SUBST - ABS")
+        # E-APPABS
         param = abstraction_body.get_param()
         # if abstraction argument is equal to argument, it also has to be replaced.
         if param != abstraction_param:
@@ -478,7 +514,7 @@ def application_substitution(abstraction_body, abstraction_param, arg):
         return abstraction_body
             
     elif type(abstraction_body) is App:
-        # print("SUBST - APP")
+        # E-APP1, E-APP2
         app_abs = abstraction_body.get_abs()
         app_arg = abstraction_body.get_arg()
         print("substleft")
