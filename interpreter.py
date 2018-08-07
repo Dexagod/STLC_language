@@ -1,3 +1,5 @@
+import copy
+
 class Value: pass
 
 class Term: pass
@@ -194,10 +196,19 @@ class IF(Term):
         self._else = _else
 
     def __str__(self):
-        return "fix " + str(self.term) 
+        return "(if " + str(self.cond) + " then " + str(self.then) + " else " + str(self._else) + ")"
 
     def __eq__(self, other):
         return type(other) == type(self) and self.__dict__ == other.__dict__
+    
+    def get_cond(self):
+        return self.cond
+
+    def get_then(self):
+        return self.then
+    
+    def get_else(self):
+        return self._else
 
 
 
@@ -276,7 +287,15 @@ def typecheck_exp(exp, context):
     exp_class = type(exp)
 
     if exp_class == Const:
-        return exp.get_type()
+        T = exp.get_type()
+        print(T, exp.get_value())
+        if T == 'bool' and (exp.get_value() != 'true' and exp.get_value() != 'false'):
+            raise Exception(str(exp.get_value()) + " is not of type 'bool'")
+
+        if T == 'int' and not isinstance(exp.get_value(), int):
+            raise Exception("'" + str(exp.get_value()) +  "' is not of type 'int'")
+
+        return T
 
     if exp_class == Var:
         if exp.get_label() in context:
@@ -338,6 +357,8 @@ def typecheck_exp(exp, context):
             raise Exception("There was no mapping for this subtype")
 
         return subtype.get_type(record_label)
+    
+    
         
     elif exp_class == App:
         t_abs = typecheck_exp(exp.abs, context)
@@ -360,6 +381,20 @@ def typecheck_exp(exp, context):
         if term_type.left != term_type.right:
             raise Exception("Fix argument left type " + str(term_type.left) + " does not match the right type " + str(term_type.right))
         return term_type.right
+
+
+    # def __init__(self, cond, then, _else):
+    elif exp_class == IF:
+        cond_type = typecheck_exp(exp.get_cond(), context)
+        then_type = typecheck_exp(exp.get_then(), context)
+        else_type = typecheck_exp(exp.get_else(), context)
+        if cond_type != 'bool':
+            raise Exception("If-statement conditional is not of type 'bool'")
+        elif then_type != else_type:
+            s = "If-statement then has type '" + exp.get_then().get_type() + "' while else has type '" + exp.get_else().get_type() + "'"
+            raise Exception(s)
+        else:
+            return else_type
 
 def eval_exp(exp):
     
@@ -422,6 +457,25 @@ def eval_exp(exp):
             t2 = exp.term.body
             substituted_term = application_substitution(t2, exp.term.param, exp) # TODO:: deepcopy of exp
             return substituted_term
+
+
+    elif exp_class == IF:
+        if not issubclass(type(exp.get_cond()), Value):
+            cond_eval = eval_exp(exp.get_cond())
+            exp.cond = cond_eval
+            return exp
+        else:
+            cond_val = exp.get_cond().get_value()
+            if type(exp.get_cond()) == Const:
+                if not (cond_val == 'true' or cond_val == 'false'):
+                    raise Exception("Constant boolean value is not 'true' or 'false'")
+                elif cond_val == 'true':
+                    return exp.get_then()
+                else:
+                    return exp.get_else()
+            else:
+                return exp
+
 
     #  NAKIJKEN OF VOLDOET AAN DE REGELS
     elif exp_class == App:
@@ -524,11 +578,13 @@ def application_substitution(abstraction_body, abstraction_param, arg):
         return abstraction_body
 
 def evaluate_expression(exp):
-    
-    evaluated = eval_exp(exp)
+    exp_copy = copy.deepcopy(exp)
+    evaluated = eval_exp(exp_copy)
+    print(evaluated, exp)
     while evaluated != exp:
         exp = evaluated
-        evaluated = eval_exp(exp)
+        exp_copy = copy.deepcopy(exp)
+        evaluated = eval_exp(exp_copy)
 
     return evaluated
 
@@ -570,34 +626,47 @@ if __name__ == "__main__":
     # record_type = typecheck_exp(record, dict(""))
     # record_application2 = Proj( App(Abs( Var("x"), record_type, Var("x")), Record(record_dict)), 1)
     
-    rd3 = dict()
-    rd3["a"] = Const("KOK", SType("string"))
-    rd3["b"] = Const(2, SType("int"))
-    r3 = Record(rd3)
-    r3type = typecheck_exp(r3, dict())
+    # rd3 = dict()
+    # rd3["a"] = Const("KOK", SType("string"))
+    # rd3["b"] = Const(2, SType("int"))
+    # r3 = Record(rd3)
+    # r3type = typecheck_exp(r3, dict())
 
 
-    rd1 = dict()
-    rd1["a"] = Var("z") # Const("KOK", SType("string"))
-    rd1["b"] = Const(2, SType("int"))
-    r1 = Record(rd1)
-    # r1type = typecheck_exp(r1, dict())
-    rd2 = dict()
-    rd2["c"] = Const("kuk", SType("string"))
-    rd2["d"] = Const(4, SType("int"))
-    r2 = Record(rd2)
-    r2type = typecheck_exp(r2, dict())
-    td = dict()
-    td["one"]=r3type#r1type
-    td["two"]=r2type
-    vtype = VType()
-    vtype.types = td
-    print("vtype", vtype)
-    a = Tag("one", Var("x"), vtype)
-    mapping = set()
-    mapping.add(Map("one", r1, "a"))
-    mapping.add(Map("two", r2, "c"))
-    # getname = App(Abs( Var("x"), vtype, Case(Var("x"), mapping)), Tag("one", Record(rd1), vtype))
-    getname = App(Abs( Var("z"), SType("string"), App(Abs( Var("x"), vtype, Case(Var("x"), mapping)), Tag("one", Record(rd1), vtype))), Const("appel",SType("string")))
-    print(evaluate_expression(getname))
-    print(typecheck_exp(getname, dict()))
+    # rd1 = dict()
+    # rd1["a"] = Var("z") # Const("KOK", SType("string"))
+    # rd1["b"] = Const(2, SType("int"))
+    # r1 = Record(rd1)
+    # # r1type = typecheck_exp(r1, dict())
+    # rd2 = dict()
+    # rd2["c"] = Const("kuk", SType("string"))
+    # rd2["d"] = Const(4, SType("int"))
+    # r2 = Record(rd2)
+    # r2type = typecheck_exp(r2, dict())
+    # td = dict()
+    # td["one"]=r3type#r1type
+    # td["two"]=r2type
+    # vtype = VType()
+    # vtype.types = td
+    # print("vtype", vtype)
+    # a = Tag("one", Var("x"), vtype)
+    # mapping = set()
+    # mapping.add(Map("one", r1, "a"))
+    # mapping.add(Map("two", r2, "c"))
+    # # getname = App(Abs( Var("x"), vtype, Case(Var("x"), mapping)), Tag("one", Record(rd1), vtype))
+    # getname = App(Abs( Var("z"), SType("string"), App(Abs( Var("x"), vtype, Case(Var("x"), mapping)), Tag("one", Record(rd1), vtype))), Const("appel",SType("string")))
+    # print(evaluate_expression(getname))
+    # print(typecheck_exp(getname, dict()))
+
+
+    print("")
+    print("")
+    print("")
+    print("")
+
+    exp = IF(App(Abs(Var("x"), 'bool', Var("x")), Const('false', 'bool')), Const(5, 'int'), Const(10, 'int') )
+
+    ev = evaluate_expression(exp)
+    print("evaluated", ev)
+    print("")
+    print(typecheck_exp(exp, dict()))
