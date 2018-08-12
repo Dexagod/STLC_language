@@ -3,7 +3,7 @@ from term_defs import *
 from type_defs import *
 
 def typecheck_exp(exp, context):
-    print("checking", exp, context)
+    # print("checking", exp, context)
     exp_class = type(exp)
 
     if exp_class == Integer:
@@ -50,35 +50,22 @@ def typecheck_exp(exp, context):
         return exp.get_as_type()
     
     elif exp_class == Case:
-        # TODO:: WHAT If TAG IS NOT A TAG BUT A VAR TO BE REPLACED OR STH
-        supertype = exp.tag.as_type
-        tag_subtype_label = exp.tag.subtype_label
-        subtype = supertype.get_type(tag_subtype_label)
-
-        if type(subtype) != RType:
-            raise Exception("The subtype of the variant was no record type")
-
-        shared_type = None
-        for m in exp.mapping:
-            subT = supertype.get_type(m.subtype_label)
-            found_type = subT.get_type(m.record_label)
-            if shared_type == None:
-                shared_type = found_type
-            else:
-                if shared_type != found_type:
-                    raise Exception("The case statement can return more than one type")
-
-        record_label = ""
-        for m in exp.mapping:
-            if m.subtype_label == tag_subtype_label:
-                record_label = m.record_label
-            
-
-        if record_label == "":
-            raise Exception("There was no mapping for this subtype")
-
-        return subtype.get_type(record_label)    
         
+        variant_type = typecheck_exp(exp.tag, context)
+        print(variant_type)
+        
+        return_type = None
+        for m in exp.mapping:
+            mapped_type = variant_type.get_type(m.subtype_label)
+            mapped_record_type = mapped_type.get_type(m.record_label)
+            if return_type == None:
+                return_type = mapped_record_type
+            else:
+                if return_type != mapped_record_type:
+                    string = str("Addressed fields of Case statement do not return equal types: " + str(mapped_type) + "   ||    " + str(mapped_record_type))
+                    raise Exception(string)
+        return return_type
+
     elif exp_class == App:
         t_abs = typecheck_exp(exp.abs, context)
         t_arg = typecheck_exp(exp.arg, context)
@@ -89,7 +76,7 @@ def typecheck_exp(exp, context):
             raise Exception(string)
         
         if t_arg != t_abs.left:
-            string = str("Application " + str(exp) + " types do not match: left_type = " + str(t_abs) + " | right_type = " + str(t_arg))
+            string = str("Application " + str(exp) + " types do not match: left_type = " + str(t_abs.left) + " | right_type = " + str(t_arg))
             raise Exception(string)
         return t_abs.right
 
@@ -154,7 +141,7 @@ def typecheck_exp(exp, context):
 
 def eval_exp(exp):
     
-    print("EVAL", exp)
+    # print("EVAL", exp)
     exp_class = type(exp)
 
     if exp_class == Integer or exp_class == Float or exp_class == String or exp_class == Boolean:
@@ -235,29 +222,29 @@ def eval_exp(exp):
     
     elif exp_class == Plus or exp_class == Minus or exp_class == Times or exp_class == Div:
         if not (type(exp.left) == Integer or type(exp.left) == Float):
-            exp.left == eval_exp(exp.left)
+            exp.left = eval_exp(exp.left)
             return exp
         if not (type(exp.right) == Integer or type(exp.right) == Float):
-            exp.right == eval_exp(exp.right)
+            exp.right = eval_exp(exp.right)
             return exp
         return substitute_expression(exp)
     
 
     elif  exp_class == LT or exp_class == GT or exp_class == LE or exp_class == GE:
         if not (type(exp.left) == Integer or type(exp.left) == Float):
-            exp.left == eval_exp(exp.left)
+            exp.left = eval_exp(exp.left)
             return exp
         if not (type(exp.right) == Integer or type(exp.right) == Float):
-            exp.right == eval_exp(exp.right)
+            exp.right = eval_exp(exp.right)
             return exp
         return substitute_expression(exp)
 
     elif exp_class == EQ:
         if not (type(exp.left) == Integer or type(exp.left) == Float or type(exp.left) == String or type(exp.left) == Boolean):
-            exp.left == eval_exp(exp.left)
+            exp.left = eval_exp(exp.left)
             return exp
         if not (type(exp.right) == Integer or type(exp.right) == Float or type(exp.right) == String or type(exp.right) == Boolean):
-            exp.right == eval_exp(exp.right)
+            exp.right = eval_exp(exp.right)
             return exp
         return substitute_expression(exp)
 
@@ -378,40 +365,39 @@ def substitute_expression(exp):
     expr_kind = type(exp)
 
     if expr_kind == Plus:
-        exp.left.value = exp.left.value + exp.right.value
-        return exp.left
+        newexp = copy.deepcopy(exp.left)
+        newexp.value = exp.left.value + exp.right.value
+        return newexp
 
     if expr_kind == Minus:
-        exp.left.value = exp.left.value - exp.right.value
-        return exp.left
+        newexp = copy.deepcopy(exp.left)
+        newexp.value = exp.left.value - exp.right.value
+        return newexp
 
     if expr_kind == Times:
-        exp.left.value = exp.left.value * exp.right.value
-        return exp.left
+        newexp = copy.deepcopy(exp.left)
+        newexp.value = exp.left.value * exp.right.value
+        return newexp
     
     if expr_kind == Div:
-        exp.left.value = exp.left.value / exp.right.value
-        return exp.left
+        if type(exp.left) == Integer:
+            return Integer(exp.left.value // exp.right.value)
+        return Float(exp.left.value / exp.right.value)
 
     if expr_kind == EQ:
-        exp.left.value = exp.left.value == exp.right.value
-        return exp.left
+        return Boolean(bool(exp.left.value == exp.right.value))
 
     if expr_kind == LT:
-        exp.left.value = exp.left.value < exp.right.value
-        return exp.left
+        return Boolean(bool(exp.left.value < exp.right.value))
 
     if expr_kind == GT:
-        exp.left.value = exp.left.value > exp.right.value
-        return exp.left
+        return Boolean(bool(exp.left.value > exp.right.value))
 
     if expr_kind == LE:
-        exp.left.value = exp.left.value <= exp.right.value
-        return exp.left
+        return Boolean(bool(exp.left.value <= exp.right.value))
 
     if expr_kind == GE:
-        exp.left.value = exp.left.value >= exp.right.value
-        return exp.left
+        return Boolean(bool(exp.left.value >= exp.right.value))
 
 def evaluate_expression(exp):
     exp_copy = copy.deepcopy(exp)
@@ -429,107 +415,73 @@ def typecheck_expression(exp, context):
 
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
 
+    expressions = []
+
+    # TESTING EXPRESSIONS
+
+    expressions.append( App(Abs(Var("x"), IntType(), Var("x")), Integer(3)) )
+    expressions.append( If(Boolean('true'), Integer(5), Integer(6) ) )
+    expressions.append( If(Boolean('false'), Integer(5), Plus(Integer(5), Times(Integer(6), Integer(7) ) ) ) )
+    expressions.append( If(Boolean('true'), Div(Integer(5), Integer(9)), Integer(6) ) )
+    expressions.append( If(GT(Integer(3), Integer(5)), Integer(5), Integer(6) ) )
+    expressions.append( If(GT(Integer(5), Integer(3)), Integer(5), Integer(6) ) )
+    expressions.append( If(GE(Integer(4), Integer(4)), Integer(5), Integer(6) ) )
+
+    # TESTING RECORDS
     
+    rd3 = dict()
+    rd3["a"] = String("Hey")
+    rd3["b"] = String("Hoi")
+    expressions.append(Record(rd3))
 
-    # int_type = SType("int")
-    # int_int_type = CType(int_type, int_type)
-    # int_int_to_int_int_type = CType(int_int_type, int_int_type)
 
-    # const_zero = Const(0, int_type)
-    # const_succ = Const("succ", int_int_type)
-
-    # one = Abs(Var("s"), int_int_type, Abs( Var("z"), int_type, App(Var("s"), Var("z"))))
-    # two = Abs(Var("s"), int_int_type, Abs( Var("z"), int_type, App(Var("s"), App(Var("s"), Var("z") ) ) ) )
-    # two2 = Abs(Var("s"), int_int_type, Abs( Var("z"), int_type, App(Var("s"), App(Var("s"), Var("z") ) ) ) )
-
-    # addition = Abs(Var("m"), int_int_to_int_int_type, Abs(Var("n"), int_int_to_int_int_type, Abs(Var("s"), int_int_type, Abs( Var("z"), int_type, App( App(Var("m"), Var("s")), App( App( Var("n"), Var("s")), Var("z") )) ) ) ) )
-
-    # successor = Abs(Var("n"), int_int_to_int_int_type, Abs(Var("s"), int_int_type, Abs( Var("z"), int_type, App( Var("s"), App( App( Var("n"), Var("s")), Var("z") )) ) ) )
-
-    # oneplustwo = App(App(addition, one), two)
-
-    # oneplustwowithargs = App(App(App(App(addition, one), two), Const("succ", int_int_type)), Const(0, int_type))
-
-    # twoplustwowithargs = App(App(App(App(addition, two), two2), Const("succ", int_int_type)), Const(0, int_type))
-
-    # successorone = App(App(App(successor, one), Const("succ", int_int_type)), Const(0, int_type))
-
-    # # TODO:: FIX IN PARSER
-    # record_dict = dict()
-    # record_dict[1] = Abs(Var("x"), int_type, Var("x"))
-    # record_dict[2] = App(Abs(Var("x"), int_type, Var("x")), Const(2, SType("int")))
-    # record_dict["test"] = Const("4", SType("str"))
-    # record = Record(record_dict)
-    # record_application = Proj( Record(record_dict), "test")
-
-    # record_type = typecheck_exp(record, dict(""))
-    # record_application2 = Proj( App(Abs( Var("x"), record_type, Var("x")), Record(record_dict)), 1)
+    record_dict = dict()
+    record_dict["hey"] = Abs(Var("x"), IntType(), Var("x"))
+    record_dict["lel"] = App(Abs(Var("x"), IntType(), Var("x")), Integer(2))
+    record_dict["test"] = Integer(5)
+    record = Record(record_dict)
+    record_type = typecheck_exp(record, dict(""))
+    expressions.append( Proj( App(Abs( Var("x"), record_type, Var("x")), Record(record_dict)), "lel") )
     
-    # rd3 = dict()
-    # rd3["a"] = Const("KOK", SType("string"))
-    # rd3["b"] = Const(2, SType("int"))
-    # r3 = Record(rd3)
-    # r3type = typecheck_exp(r3, dict())
+    # TESTING VARIANTS
+
+    rd1 = dict()
+    rd1["a"] = Var("z") # Const("KOK", SType("string"))
+    rd1["b"] = Integer(2)
+    r1 = Record(rd1)
+    # r1type = typecheck_exp(r1, dict())
+    rd2 = dict()
+    rd2["c"] = String("TEST")
+    rd2["d"] = Integer(4)
+    r2 = Record(rd2)
+    r2type = typecheck_exp(r2, dict())
+
+    rd3 = dict()
+    rd3["a"] = String("appel") # Const("KOK", SType("string"))
+    rd3["b"] = Integer(2)
+    r3 = Record(rd3)
+    r3type = typecheck_exp(r3, dict())
 
 
-    # rd1 = dict()
-    # rd1["a"] = Var("z") # Const("KOK", SType("string"))
-    # rd1["b"] = Const(2, SType("int"))
-    # r1 = Record(rd1)
-    # # r1type = typecheck_exp(r1, dict())
-    # rd2 = dict()
-    # rd2["c"] = Const("kuk", SType("string"))
-    # rd2["d"] = Const(4, SType("int"))
-    # r2 = Record(rd2)
-    # r2type = typecheck_exp(r2, dict())
-    # td = dict()
-    # td["one"]=r3type#r1type
-    # td["two"]=r2type
-    # vtype = VType()
-    # vtype.types = td
-    # print("vtype", vtype)
-    # a = Tag("one", Var("x"), vtype)
-    # mapping = set()
-    # mapping.add(Map("one", r1, "a"))
-    # mapping.add(Map("two", r2, "c"))
-    # # getname = App(Abs( Var("x"), vtype, Case(Var("x"), mapping)), Tag("one", Record(rd1), vtype))
-    # getname = App(Abs( Var("z"), SType("string"), App(Abs( Var("x"), vtype, Case(Var("x"), mapping)), Tag("one", Record(rd1), vtype))), Const("appel",SType("string")))
-    # print(evaluate_expression(getname))
-    # print(typecheck_exp(getname, dict()))
+    td = dict()
+    td["one"] = r3type#r1type
+    td["two"] = r2type
 
-    # expressions = []
-    # expressions.append( If(App(Abs(Var("x"), BoolType(), Var("x")), Boolean('false')), Boolean("true"), Boolean("false") ) )
-    # expressions.append( Plus(Float(3), Float(4)) )
-
-    # expressions.append( 
-    #     App(
-    #         Fix(
-    #             Abs(
-    #                 Var("fct"), CType(IntType, IntType), 
-    #                     Abs(Var("n"), IntType, 
-    #                         If( 
-    #                             EQ(Var("n"), Integer(0)), 
-    #                             Integer(1), 
-    #                             Times(Var("n"), App(
-    #                                 Var("fct"), 
-    #                                 Minus( Var("n"), Integer(1))
-    #                             )
-    #                         )
-    #                     )
-    #                 )
-    #             ) 
-    #         ),
-    #         Integer(5)
-    #     )
-    # )
+    vtype = VType(td)
+    a = Tag("one", Var("x"), vtype)
+    mapping = set()
+    mapping.add(Map("one", r1, "a"))
+    mapping.add(Map("two", r2, "c"))
     
-    # for exp in expressions:
-    #     print('')
-    #     typechecked = typecheck_expression(exp, dict())
-    #     print('typechecked:\n', typechecked)
-    #     ev = evaluate_expression(exp)
-    #     print("evaluated:\n", ev)
+    expressions.append( App(Abs( Var("z"), StringType(), App(Abs( Var("x"), vtype, Case(Var("x"), mapping)), Tag("one", Record(rd1), vtype))), String("appel")) )
 
+    for exp in expressions:
+        print('')
+        print(exp)
+        typechecked = typecheck_expression(exp, dict())
+        print('typechecked:\n', typechecked)
+        ev = evaluate_expression(exp)
+        print("evaluated:\n", ev)
 

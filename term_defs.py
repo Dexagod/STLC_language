@@ -13,7 +13,7 @@ class Integer(Term, Value):
     def __init__(self, value):
         self.value = value
     def __str__(self):
-        return str(self.value)
+        return str("Integer(" + str(self.value) + ")")
     def __eq__(self, other):
         return (type(other) == type(self)) and other.value == self.value
 
@@ -21,7 +21,7 @@ class Float(Term, Value):
     def __init__(self, value):
         self.value = value
     def __str__(self):
-        return str(self.value)
+        return str("Float("+ str(self.value) +")")
     def __eq__(self, other):
         return (type(other) == type(self)) and other.value == self.value
 
@@ -29,7 +29,7 @@ class String(Term, Value):
     def __init__(self, value):
         self.value = value
     def __str__(self):
-        return str(self.value)
+        return str("String("+ str(self.value) +")")
     def __eq__(self, other):
         return (type(other) == type(self)) and other.value == self.value
 
@@ -37,9 +37,9 @@ class Boolean(Term, Value):
     def __init__(self, value):
         self.value = value
     def __str__(self):
-        return str(self.value)
+        return str("Boolean("+ str(self.value) +")")
     def is_true(self):
-        return self.value == 'true'
+        return bool(self.value) == True
     def __eq__(self, other):
         return (type(other) == type(self)) and other.value == self.value
     
@@ -49,7 +49,7 @@ class Var(Term):
         self.T = T
 
     def __str__(self):
-        return "variable: '" + self.label + "'"
+        return "Var(" + str(self.label) + ")"
 
     def __eq__(self, other):
         return (type(other) == type(self)) and (other.label == self.label)
@@ -64,7 +64,7 @@ class Abs(Term, Value):
         self.body = body
 
     def __str__(self):
-        return "(\\" + str(self.param) + ":" + str(self.given_type) + "." + str(self.body) + ")"
+        return "Abs(" + str(self.param) + ":" + str(self.given_type) + "," + str(self.body) + ")"
 
     def __eq__(self, other):
         return (type(other) == type(self)) and (other.param == self.param) and (other.body == self.body) and (other.given_type == self.given_type)
@@ -89,7 +89,7 @@ class App(Term):
         self.value = False
     
     def __str__(self):
-        return "(" + str(self.abs) + " " + str(self.arg) + ")"
+        return "App(" + str(self.abs) + "," + str(self.arg) + ")"
 
     def __eq__(self, other):
         return (type(other) == type(self)) and (other.abs == self.abs) and (other.arg == self.arg)
