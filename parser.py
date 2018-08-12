@@ -2,79 +2,155 @@ from purplex import Lexer, TokenDef
 from purplex import Parser, attach
 from purplex import LEFT, RIGHT
 
+from type_defs import *
+from term_defs import *
+
+import ast
+
 
 class MyLexer(Lexer):
 
-    INTEGER = TokenDef(r'\d+')
-    STRING = TokenDef(r'&"[^\"]*"&')
-    INTEGER = TokenDef(r'&[0-9]+&')
-    COMMENT = TokenDef(r';.*$')
     COLON = TokenDef(r':')
+    ASSIGN = TokenDef(r':=')
     ARROW = TokenDef(r'->')
-    TYPE = TokenDef(r'\$[a-zA-Z_]+')
-    VARNAME = TokenDef(r'[a-zA-Z_][a-zA-Z0-9_]*')
     LPAREN = TokenDef(r'\(')
     RPAREN = TokenDef(r'\)')
+    LBRAC = TokenDef(r'\{')
+    RBRAC = TokenDef(r'\}')
     BACKSLASH = TokenDef(r'\\')
-    FORWSLASH = TokenDef(r'/')
+    STRAIGHT = TokenDef(r'\|')
     POINT = TokenDef(r'\.')
+    COMMA = TokenDef(r'\,')
+
+    FUNCTION = TokenDef(r'fun')
+    SEMICOLON = TokenDef(r'\;')
+
+    IF = TokenDef(r'if')
+    THEN = TokenDef(r'then')
+    ELSE = TokenDef(r'else')
+    ELSE = TokenDef(r'else')
+
+    INTEGERTYPE = TokenDef(r'int')
+    FLOATTYPE = TokenDef(r'float')
+    STRINGTYPE = TokenDef(r'string')
+    BOOLTYPE = TokenDef(r'bool')
+
+    BOOLEAN = TokenDef(r'(true | false)')
+
+    PLUS = TokenDef(r'\+')
+    MINUS = TokenDef(r'-')
+    TIMES = TokenDef(r'\*')
+    DIV = TokenDef(r'/')
+    LE = TokenDef(r'<=')
+    GE = TokenDef(r'>=')
+    EQ = TokenDef(r'==')
+    LT = TokenDef(r'<')
+    GT = TokenDef(r'>')
+
     WHITESPACE = TokenDef(r'[\s\n]+', ignore=True)
+    FLOAT = TokenDef(r'\d+\.\d+')
+    INTEGER = TokenDef(r'\d+')
+    VARNAME = TokenDef(r'[a-zA-Z_][a-zA-Z0-9_]*')
+    # STRING = TokenDef(r'("[^"]*"|\'[^\']*\')')
+    STRING = TokenDef(r'"[^"]*"')
 
 class MyParser(Parser):
 
     LEXER = MyLexer
     START = 'e'
 
-    @attach('e : e COMMENT')
-    def endsemicolon(self, left, comm):
-        print("Comment:", comm[1:])
+    PRECEDENCE = (
+        (LEFT, 'TIMES', 'DIV'),
+        (LEFT, 'PLUS', 'MINUS'),
+    )
+
+    @attach('e : e SEMICOLON e')
+    def splitexp(self, left, scolon, right):
+        return Seq(left, right)
+
+    @attach('e : e SEMICOLON')
+    def splitexpend(self, left, scolon):
         return left
 
-    @attach('e : LPAREN e RPAREN')
-    def brackets(self, lparen, expr, rparen):
-        return " ( " + expr + " ) "
+    @attach('e : VARNAME ASSIGN e')
+    def defvar(self, varname, ass, right):
+        return Assign(Var(varname), right)
     
-    @attach('e : BACKSLASH VARNAME COLON e POINT e FORWSLASH')
-    def lambda_abstraction(self, lambda_token, param, colon, giventype, point, body, abstr_end):
-        return "Abs(argument=" + param +", given_type=" + giventype + ", body=" + body + ")"
+    @attach('e : FUN LPAREN e COLON e RPAREN LBRAC e RBRAC ')
+    def fundef(self, fun, lp, arg, col, gtype, rp, lb, body, rb):
+        return Abs(arg, gtype, body)
 
     @attach('e : INTEGER')
     def const_int(self, integer):
-        return "Const( label="+ str(integer)[1:-1] + ", T='Integer')"
+        return Integer(int(integer))
 
-    @attach('e : STRING')
-    def const_str(self, string):
-        return "Const( label="+ str(string)[1:-1] + ", T='String')"
+    @attach('e : FLOAT')
+    def const_float(self, _float):
+        return Float(float(_float))
 
-    @attach('e : TYPE')
-    def functiontype(self, type):
-        return "SType("+ str(type) + ")"
+
+    @attach('e : BOOLEAN')
+    def const_bool(self, _bool):
+        return Boolean(str(_bool))
+
+    @attach('e : LBRAC e RBRAC')
+    def record(self, lbrac, content, rbrac):
+        if content[1] == "val":
+            return Record(content[0])
+        return RType(content[0])
+
+    @attach('e : INTEGERTYPE')
+    def type_int(self, _type):
+        return IntType()
+
+    @attach('e : FLOATTYPE')
+    def type_float(self, _type):
+        return FloatType()
+
+    @attach('e : STRINGTYPE')
+    def type_str(self, _type):
+        return StringType()
+
+    @attach('e : BOOLTYPE')
+    def type_bool(self, _type):
+        return BoolType()
 
     @attach('e : LPAREN e ARROW e RPAREN')
     def compositefunctiontype(self, lparen, lefttype, arrow, righttype, rightparen):
-        return "CType("+ str(lefttype) + ", " + str(righttype) + ")"
+        return CType(lefttype, righttype)
     
-    @attach('e : VARNAME e')
-    def simplevar(self, varname, rest):
-        if rest == None:
-            return "SimpleVar(label=" + str(varname) + ") " 
-        else:
-            return "SimpleVar(label=" + str(varname) + ") " + rest
-
     @attach('e : VARNAME')
     def var(self, string):
-        return "Var(" + string + ")"
-    
-    @attach('e : e e')
-    def application(self, left, right):
-        return "App("+ str(left) + ", " + str(right) + ")"
+        return Var(string)
 
-if __name__ == '__main__':
-    parser = MyParser()
-    problems = [
-        ("TEST"),
-        ('\\n:(($int->$int)->($int->$int)).\\s:($int->$int).\\z:$int. s ( n s z ) /// &1& &2&'),
-    ]
-    for problem in problems:
-        result = parser.parse(problem)
-        print(result)
+    @attach('e : STRING EQ e COMMA e')
+    def record_list_head(self, label, eq, val, comma, tail):
+        d = dict()
+        d[label] = val
+        return (d.update(tail[0]), "val")
+    
+    @attach('e : STRING EQ e')
+    def record_list_tail(self, label, eq, val):
+        d = dict()
+        d[label] = val
+        return (d, "val")
+
+    @attach('e : STRING COLON e COMMA e')
+    def record_type_list_head(self, label, eq, val, comma, tail):
+        d = dict()
+        d[label] = val
+        return (d.update(tail[0]), "type")
+    
+    @attach('e : STRING COLON e')
+    def record_type_list_tail(self, label, eq, val):
+        d = dict()
+        d[label] = val
+        return (d, "type")
+    
+    @attach('e : STRING')
+    def const_str(self, string):
+        return String(str(string))
+    
+    # @attach('e : e e')
+    # def application(self, left, right):
+    #     return App(left, right)
