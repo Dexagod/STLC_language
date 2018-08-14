@@ -7,27 +7,17 @@ from term_defs import Seq
 if __name__ == "__main__":
     parser = MyParser()
     print("Parser setup finished")
-    problems = [
-        ('\\x:int.x| 5'),
-        ('\\x:int.x| (5)'),
-        ('(\\y:(int->int).\\z:int. y z || \\x:int.x| 10) '),
-        ('5 + 6'),
-        ('5 - 6'),
-        ('5 * 6'),
-        ('5 / 6'),
-        ('5 + (6 * 7)'),
-        ('if true then 5 else 6'),
-        ('if false then 5 else (5 + (6 * 7))'),
-        ('if true then (5 / 9) else 6'),
-        ('if 3 > 5 then 5 else 6'),
-        ('if (5 < 3) then 5 else 6'),
-        ('if 4 >= 4 then 5 else 6'),
-        ('{"a"=1, "b"=2, "c"=3}')
-    ]
-    for problem in problems:
+        #('case Tag("one", {"a"= 1, "b"= 2}), < "one": {"a": int, "b": int}, "two": {"c": int, "d":int} >  of <"one", {"a"= Integer(1), "b"= Integer(2)}> => {"a"= 1, "b"=2}["a"])) | Map("two", {'c': Integer(3), 'd': Integer(4)}, Proj(Record({'c': Integer(3), 'd': Integer(4)}), 'c'))]) ))'),
+        # STILL ERROR PRESENT IN VARIANT:: not checked on variant type of element!!!!
+
+        # subject :::        'object with type in varianttype'
+        # tag :::             < label = subject > as variantType
+        # variantType :::     < label1 : T1 , label2 : T2 >
+
+    for line in open("program.ayylmao"):
         print("")
-        print(problem)
-        result = parser.parse(problem)
+        print(line)
+        result = parser.parse(line)
         print(result)
         _type = typecheck_expression(result, dict())
         print(_type)

@@ -113,7 +113,7 @@ class Record(Term):
     def __str__(self):
         string = "{"
         for key in self.vals:
-            string += str(key) + " : " + str(self.vals[key]) + ", "
+            string += str(key) + " = " + str(self.vals[key]) + ", "
         string = string[:-2] + "}"
         return string
 
@@ -136,7 +136,7 @@ class Proj(Term):
         self.label = label
     
     def __str__(self):
-        return str(self.record) + ".=>." + str(self.label)
+        return str(self.record) + "." + str(self.label)
 
     def __eq__(self, other):
         return (type(other) == type(self)) and other.record == self.record and other.label == self.label
@@ -183,19 +183,19 @@ class Case(Term):
 
 
 class Map(Term):
-    def __init__(self, subtype_label, record, record_label):
+    def __init__(self, subtype_label, object, mapped_action):
         self.subtype_label = subtype_label
-        self.record = record
-        self.record_label = record_label
+        self.object = object
+        self.mapped_action = mapped_action
 
     def __str__(self):
-        return "<" + str(self.subtype_label) + "=" + str(self.record) + "> => " + self.record_label
+        return "<" + str(self.subtype_label) + "=" + str(self.object) + "> => " + str(self.mapped_action)
 
     def __eq__(self, other):
-        return (type(other) == type(self)) and other.subtype_label == self.subtype_label and other.record == self.record and other.record_label == self.record_label
+        return (type(other) == type(self)) and other.subtype_label == self.subtype_label and other.object == self.object and other.mapped_action == self.mapped_action
     
     def __hash__(self):
-        return str(str(self.subtype_label) + str(self.record_label)).__hash__()
+        return str(str(self.subtype_label) + str(self.mapped_action)).__hash__()
 
 class Fix(Term):
     def __init__(self, term):

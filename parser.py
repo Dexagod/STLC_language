@@ -14,20 +14,30 @@ class MyLexer(Lexer):
 
     LPAREN = TokenDef(r'\(')
     RPAREN = TokenDef(r'\)')
-    LBRAC = TokenDef(r'\{')
-    RBRAC = TokenDef(r'\}')
+    LBRACE = TokenDef(r'\{')
+    RBRACE = TokenDef(r'\}')
+    LBRACKET = TokenDef(r'\[')
+    RBRACKET = TokenDef(r'\]')
+    # LHOOK = TokenDef(r'\<')
+    # RHOOK = TokenDef(r'\>')
     BACKSLASH = TokenDef(r'\\')
-    STRAIGHT = TokenDef(r'\|')
+    SEMICOL = TokenDef(r'\;')
     POINT = TokenDef(r'\.')
     COMMA = TokenDef(r',')
+    STRAIGHT = TokenDef(r'\|')
 
-    OP = TokenDef(r'(\+|-|\*|\/|<=|>=|==|<|>)')
+    OP = TokenDef(r'(\<-|\+|-|\*|\/|\<=|\>=|==|\<|\>)')
 
     ASSIGN = TokenDef(r'=')
     
     IF = TokenDef(r'if')
     THEN = TokenDef(r'then')
     ELSE = TokenDef(r'else')
+    
+    CASE = TokenDef(r'case')
+    OF = TokenDef(r'of')
+    
+    
 
     INTEGERTYPE = TokenDef(r'int')
     FLOATTYPE = TokenDef(r'float')
@@ -38,7 +48,7 @@ class MyLexer(Lexer):
 
     WHITESPACE = TokenDef(r'[\s\n]+', ignore=True)
 
-    BOOLEAN = TokenDef(r'(true | false)')
+    BOOLEAN = TokenDef(r'(true|True|False|false)')
     FLOAT = TokenDef(r'\d+\.\d+')
     INTEGER = TokenDef(r'\d+')
     VARNAME = TokenDef(r'[a-zA-Z_][a-zA-Z0-9_]*')
@@ -54,12 +64,16 @@ class MyParser(Parser):
     def brackets(self, lparen, expr, rparen):
         return  expr 
     
-    @attach('e : BACKSLASH VARNAME COLON e POINT e STRAIGHT')
+    @attach('e : BACKSLASH VARNAME COLON e POINT e SEMICOL')
     def lambda_abstraction(self, lambda_token, param, colon, giventype, point, body, abstr_end):
         return Abs(Var(param), giventype, body)
 
     @attach('e : IF e THEN e ELSE e')
     def if_stmt(self, i, cond, t, a, e, b):
+        return If(cond, a, b)
+
+    @attach('e : CASE e OF LPAREN e RPAREN')
+    def case(self, i, cond, t, a, e, b):
         return If(cond, a, b)
 
     @attach('e : INTEGERTYPE')
@@ -88,53 +102,55 @@ class MyParser(Parser):
 
     @attach('e : BOOLEAN')
     def const_bool(self, _bool):
-        print("HERE")
-        print(_bool)
-        if "false" in _bool or "False" in _bool or "fls" in _bool:
+        if "false" in _bool or "False" in _bool:
             return(Boolean(False))
         return Boolean(True)
-
-    @attach('e : STRING')
-    def const_str(self, string):
-        return String(str(string))
-
-    @attach('e : VARNAME')
-    def exp_var(self, string):
-        return Var(str(string))
     
     @attach('e : LPAREN e ARROW e RPAREN')
     def compositefunctiontype(self, lparen, lefttype, arrow, righttype, rightparen):
         return CType(lefttype, righttype)
+
+    @attach('e : LBRACE e RBRACE')
+    def record(self, lbrac, record, rbrac):
+        if record[1] == "value":
+            return Record(record[0])
+        return RType(record[0])
     
+    @attach('e : VARNAME ASSIGN e COMMA e')
+    def recordhead(self, left, assign, right, delim, tail):
+        d = dict()
+        d[str(left)] = right
+        d.update(dict(tail[0]))
+        return (d, "value")
 
-    # @attach('e : LBRAC e RBRAC')
-    # def record(self, lbrac, record, rbrac):
-    #     if record[1] == "value":
-    #         return Record(record[0])
-    #     return RType(record[0])
+    @attach('e : VARNAME ASSIGN e')
+    def recordtail(self, left, assign, right):
+        d = dict()
+        d[str(left)] = right
+        return (d, "value")    
+
+    @attach('e : VARNAME COLON e COMMA e')
+    def recordtypehead(self, left, assign, right, delim, tail):
+        d = dict()
+        d[str(left)] = right
+        d.update(dict(tail[0]))
+        return (d, "type")
+
+    @attach('e : VARNAME COLON e')
+    def recordtypetail(self, left, assign, right):
+        d = dict()
+        d[str(left)] = right
+        return (d, "type")    
     
+    @attach('e : e LBRACKET VARNAME RBRACKET')
+    def recordproj(self, record, brac, label, rbrac):
+        return Proj(record, label)    
 
-
-    # @attach('e : e ASSIGN e COMMA e')
-    # def recordhead(self, left, assign, right, delim, tail):
-    #     d = dict()
-    #     d[left] = right
-    #     return (d.update(tail[0]), "value")
-
-    # @attach('e : e ASSIGN e')
-    # def recordtail(self, left, assign, right):
-    #     d = dict()
-    #     d[left] = right
-    #     return (d, "value")
     
-    
-
-    # # @attach('e : LPAREN e ARROW e RPAREN')
-    # # def projection(self, lparen, lefttype, arrow, righttype, rightparen):
-    # #     return CType(lefttype, righttype)
-
     @attach('e : e OP e')
     def condit(self, left, op, right):
+        if op == '<-':
+            return App(left, right)
         if op == '<=':
             return LE(left, right)
         if op == '>=':
@@ -153,7 +169,12 @@ class MyParser(Parser):
             return Times(left, right)
         if op == "/":
             return Div(left, right)
-    
-    @attach('e : e e')
-    def application(self, left, right):
-        return App(left, right)
+
+
+    @attach('e : STRING')
+    def const_str(self, string):
+        return String(str(string))
+
+    @attach('e : VARNAME')
+    def exp_var(self, string):
+        return Var(str(string))

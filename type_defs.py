@@ -32,7 +32,7 @@ class RType(Type):
     def __str__(self):
         string = "{"
         for key in self.types:
-            string += str(key) + " ~ " + str(self.types[key]) + ", "
+            string += str(key) + " : " + str(self.types[key]) + ", "
         string = string[:-2] + "}"
         return string
     

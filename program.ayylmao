@@ -1,1 +1,21 @@
-(\x:int.x) 100
+\x:int.x; <- 5
+\x:int.x; <- (5)
+\y:(int->int). y ; <- \x:int. x ; 
+\y:int. \z:int. y + z ;; <- 11 <- 10
+\y:(int->int). \z:int.  y <- z ;; <- \x:int. x ; <- 18
+5 + 6
+5 - 6
+5 * 6
+5 / 6
+5 + (6 * 7)
+5 > (6 + 7)
+5 <= (6 + 7)
+if true then 5 else 6
+if false then 5 else (5 + (6 * 7))
+if true then (5 / 9) else 6
+if 3 > 5 then 5 else 6
+if (5 < 3) then 5 else 6
+if 4 >= 4 then 5 else 6
+{a=1, b="hey", c=true}
+{a=1, b="hey", c=true}[b]
+\z:{a:int, b:string, c:bool}. z[a] ; <- {a=1, b="hey", c=true}

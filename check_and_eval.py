@@ -3,7 +3,9 @@ from term_defs import *
 from type_defs import *
 
 def typecheck_exp(exp, context):
-    # print("checking", exp, context)
+
+    print("checking", exp, context)
+    
     exp_class = type(exp)
 
     if exp_class == Integer:
@@ -56,8 +58,9 @@ def typecheck_exp(exp, context):
         
         return_type = None
         for m in exp.mapping:
-            mapped_type = variant_type.get_type(m.subtype_label)
-            mapped_record_type = mapped_type.get_type(m.record_label)
+            mapped_type = variant_type.get_type(m.subtype_label)    
+            mapped_record_type = typecheck_exp(m.mapped_action, context) #mapped_type.get_type(m.mapped_action)
+            # TODO:: THIS DOES NOT USE THE VARIANT TYPE>
             if return_type == None:
                 return_type = mapped_record_type
             else:
@@ -141,7 +144,8 @@ def typecheck_exp(exp, context):
 
 def eval_exp(exp):
     
-    # print("EVAL", exp)
+    print("EVAL", exp)
+
     exp_class = type(exp)
 
     if exp_class == Integer or exp_class == Float or exp_class == String or exp_class == Boolean:
@@ -180,14 +184,14 @@ def eval_exp(exp):
             mapping = exp.mapping
             tag = exp.tag
             subtype_label = tag.subtype_label
-            record_label = ""
+            mapped_action = ""
             for m in mapping:
                 if m.subtype_label == subtype_label:
-                    record_label = m.record_label
-            if record_label == "":
+                    mapped_action = m.mapped_action
+            if mapped_action == "":
                 raise Exception("subtype label not found in Variant")
             
-            return eval_exp(Proj(tag.term, record_label))
+            return eval_exp(mapped_action)
         else:
             return exp
     
@@ -470,12 +474,17 @@ if __name__ == "__main__":
     td["two"] = r2type
 
     vtype = VType(td)
+    print("VTYPE")
+    print(vtype)
     a = Tag("one", Var("x"), vtype)
     mapping = set()
-    mapping.add(Map("one", r1, "a"))
-    mapping.add(Map("two", r2, "c"))
+    mapping.add(Map("one", r1, Proj(r1, "a")))
+    mapping.add(Map("two", r2, Proj(r1, "c")))
     
     expressions.append( App(Abs( Var("z"), StringType(), App(Abs( Var("x"), vtype, Case(Var("x"), mapping)), Tag("one", Record(rd1), vtype))), String("appel")) )
+
+    # case <varianttag = {'}> as VTYPE of ( <varianttag = record1> => record1.a | <varianttag2 = record2> => record2.b ) 
+    expressions.append( Case(  Tag("one", Record({'a': Integer(1), 'b': Integer(2)}), VType( { "one": RType({'a': IntType, 'b': IntType}), "two": RType({'c': IntType, 'd': IntType}) } )) , set([Map('one', Record({'a': Integer(1), 'b': Integer(2)}), Proj(Record({'a': Integer(1), 'b': Integer(2)}), 'a')), Map('two', {'c': Integer(3), 'd': Integer(4)}, Proj(Record({'c': Integer(3), 'd': Integer(4)}), 'c'))]) ))
 
     for exp in expressions:
         print('')
