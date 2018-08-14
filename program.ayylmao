@@ -19,3 +19,8 @@ if 4 >= 4 then 5 else 6
 {a=1, b="hey", c=true}
 {a=1, b="hey", c=true}[b]
 \z:{a:int, b:string, c:bool}. z[a] ; <- {a=1, b="hey", c=true}
+<<one: {a: int, b: int}, two: {c: int, d:int} >>
+<<one = {a=1, b=2}>> as <<one: {a: int, b: int}, two: {c: int, d:int} >> ; 
+<< one = {a= 1, b= 2} >> as <<one: {a: int, b: int}, two: {c: int, d:int} >>;
+case << one = {a= 1, b= 2} >> as <<one: {a: int, b: int}, two: {c: int, d:int} >>;  of  { one = x => x[a] | two = y => y[c]} 
+case << one = {a= 1, b= 2} >> as <<one: {a: int, b: int}, two: {c: int, d:int} >>;  of  { one = x => 10 | two = y => 20} 

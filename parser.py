@@ -11,6 +11,7 @@ class MyLexer(Lexer):
 
     COLON = TokenDef(r':')
     ARROW = TokenDef(r'->')
+    DARROW = TokenDef(r'=>')
 
     LPAREN = TokenDef(r'\(')
     RPAREN = TokenDef(r'\)')
@@ -18,8 +19,8 @@ class MyLexer(Lexer):
     RBRACE = TokenDef(r'\}')
     LBRACKET = TokenDef(r'\[')
     RBRACKET = TokenDef(r'\]')
-    # LHOOK = TokenDef(r'\<')
-    # RHOOK = TokenDef(r'\>')
+    LHOOK = TokenDef(r'\<\<')
+    RHOOK = TokenDef(r'\>\>')
     BACKSLASH = TokenDef(r'\\')
     SEMICOL = TokenDef(r'\;')
     POINT = TokenDef(r'\.')
@@ -36,8 +37,7 @@ class MyLexer(Lexer):
     
     CASE = TokenDef(r'case')
     OF = TokenDef(r'of')
-    
-    
+    AS = TokenDef(r'as')
 
     INTEGERTYPE = TokenDef(r'int')
     FLOATTYPE = TokenDef(r'float')
@@ -70,10 +70,6 @@ class MyParser(Parser):
 
     @attach('e : IF e THEN e ELSE e')
     def if_stmt(self, i, cond, t, a, e, b):
-        return If(cond, a, b)
-
-    @attach('e : CASE e OF LPAREN e RPAREN')
-    def case(self, i, cond, t, a, e, b):
         return If(cond, a, b)
 
     @attach('e : INTEGERTYPE')
@@ -110,42 +106,106 @@ class MyParser(Parser):
     def compositefunctiontype(self, lparen, lefttype, arrow, righttype, rightparen):
         return CType(lefttype, righttype)
 
-    @attach('e : LBRACE e RBRACE')
-    def record(self, lbrac, record, rbrac):
-        if record[1] == "value":
-            return Record(record[0])
-        return RType(record[0])
+    @attach('e : LBRACE VARNAME ASSIGN e COMMA e')
+    def recordhead(self, lbrace, left, assign, right, delim, tail):
+        d = dict()
+        d[str(left)] = right
+        d.update(dict(tail))
+        return Record(d)
     
     @attach('e : VARNAME ASSIGN e COMMA e')
-    def recordhead(self, left, assign, right, delim, tail):
+    def recordmid(self, left, assign, right, delim, tail):
         d = dict()
         d[str(left)] = right
-        d.update(dict(tail[0]))
-        return (d, "value")
+        d.update(dict(tail))
+        return d
 
-    @attach('e : VARNAME ASSIGN e')
-    def recordtail(self, left, assign, right):
+    @attach('e : VARNAME ASSIGN e RBRACE')
+    def recordtail(self, left, assign, right, rbrace):
         d = dict()
         d[str(left)] = right
-        return (d, "value")    
+        return d  
+
+    @attach('e : LBRACE VARNAME COLON e COMMA e')
+    def recordtypehead(self, lbrace, left, assign, right, delim, tail):
+        d = dict()
+        d[str(left)] = right
+        d.update(dict(tail))
+        return RType(d)
 
     @attach('e : VARNAME COLON e COMMA e')
-    def recordtypehead(self, left, assign, right, delim, tail):
+    def recordtypemidandVTYPEmid(self, left, assign, right, delim, tail):
         d = dict()
         d[str(left)] = right
-        d.update(dict(tail[0]))
-        return (d, "type")
+        d.update(dict(tail))
+        return d
 
-    @attach('e : VARNAME COLON e')
-    def recordtypetail(self, left, assign, right):
+    @attach('e : VARNAME COLON e RBRACE')
+    def recordtypetail(self, left, assign, right, rbrace):
         d = dict()
         d[str(left)] = right
-        return (d, "type")    
+        return d   
+    
+    @attach('e : RBRACE')
+    def recordandrecordtypesignletail(self, rbrace):
+        d = dict()
+        return d   
     
     @attach('e : e LBRACKET VARNAME RBRACKET')
     def recordproj(self, record, brac, label, rbrac):
         return Proj(record, label)    
 
+    @attach('e : LHOOK VARNAME ASSIGN e RHOOK AS e SEMICOL')
+    def tag(self, lhook, label, assign, record, rhook, _as, varianttype, scol):
+        return Tag(label, record, varianttype)  
+
+
+    @attach('e : LHOOK VARNAME COLON e COMMA e')
+    def vtypehead(self, lhook, label, colon, record, comma, tail):
+        d = dict()
+        d[str(label)] = record
+        d.update(dict(tail))
+        return VType(d)  
+
+    @attach('e : VARNAME COLON e RHOOK')
+    def vtypetail(self, label, colon, record, RHOOK):
+        d = dict()
+        d[str(label)] = record
+        return d
+
+    @attach('e : RHOOK')
+    def vtypesingletail(self, label, colon, record, RHOOK):
+        d = dict()
+        return d   
+
+    @attach('e : CASE e OF LBRACE VARNAME ASSIGN VARNAME DARROW e STRAIGHT e')
+    def case(self, case, tag, of, lbrac, label, assign, varname, darrow, mapped_action, straight, tail):
+        if type(tail) is set:
+            tail.add( Map(label, Var(varname), mapped_action) )
+            return Case(tag, tail)
+        else:
+            s = set()
+            s.add( Map(label, Var(varname), mapped_action) )
+            return Case(tag, s)
+
+    @attach('e : VARNAME ASSIGN VARNAME DARROW e STRAIGHT e')
+    def mapmid(self, label, ass, varname, darr, mapped_action, straight, tail):
+        if type(tail) is set:
+            tail.add( Map(label, Var(varname), mapped_action) )
+        else:
+            s = set()
+            s.add( Map(label, Var(varname), mapped_action) )
+            return s
+
+    @attach('e : VARNAME ASSIGN VARNAME DARROW e RBRACE' )
+    def mapend(self, label, assign, varname, darrow, mapped_action, rbrace):
+        s = set()
+        s.add( Map(label, Var(varname), mapped_action) )
+        return s
+
+    # @attach('e : SEMICOL')
+    # def mapendsingle(self, scol):
+    #     return set() 
     
     @attach('e : e OP e')
     def condit(self, left, op, right):

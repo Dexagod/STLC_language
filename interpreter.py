@@ -25,3 +25,5 @@ if __name__ == "__main__":
         print(_eval)
         print("")
         
+
+        #case <<"one" = {"a"= 1, "b"= 2} >> as <<"one": {"a": int, "b": int}, "two": {"c": int, "d":int} >>  of  <{ "one" = {"a"= Integer(1), "b"= Integer(2) } >> => {"a"= 1, "b"=2}["a"])) | Map("two", {'c': Integer(3), 'd': Integer(4)}, Proj(Record({'c': Integer(3), 'd': Integer(4)}), 'c'))]) ))'),

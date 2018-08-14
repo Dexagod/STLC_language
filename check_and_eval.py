@@ -54,12 +54,17 @@ def typecheck_exp(exp, context):
     elif exp_class == Case:
         
         variant_type = typecheck_exp(exp.tag, context)
-        print(variant_type)
         
         return_type = None
         for m in exp.mapping:
+            print("HERE", m)
             mapped_type = variant_type.get_type(m.subtype_label)    
-            mapped_record_type = typecheck_exp(m.mapped_action, context) #mapped_type.get_type(m.mapped_action)
+            newcontext = copy.deepcopy(context)
+            print("-------------")
+            print(m.abstr)
+            newcontext[m.abstr.get_label()] = variant_type.get_type(m.subtype_label)
+            mapped_record_type = typecheck_exp(m.mapped_action, newcontext)
+            print(mapped_record_type)
             # TODO:: THIS DOES NOT USE THE VARIANT TYPE>
             if return_type == None:
                 return_type = mapped_record_type
@@ -140,6 +145,9 @@ def typecheck_exp(exp, context):
             raise Exception("Operand arguments must both be of the same type.")
         return BoolType()
 
+    else:
+        return exp
+
 
 
 def eval_exp(exp):
@@ -187,6 +195,7 @@ def eval_exp(exp):
             mapped_action = ""
             for m in mapping:
                 if m.subtype_label == subtype_label:
+                    application_substitution(m.mapped_action, m.abstr, tag.term)
                     mapped_action = m.mapped_action
             if mapped_action == "":
                 raise Exception("subtype label not found in Variant")
@@ -478,13 +487,13 @@ if __name__ == "__main__":
     print(vtype)
     a = Tag("one", Var("x"), vtype)
     mapping = set()
-    mapping.add(Map("one", r1, Proj(r1, "a")))
-    mapping.add(Map("two", r2, Proj(r1, "c")))
+    mapping.add(Map("one", Var("l"), Proj(Var("l"), "a")))
+    mapping.add(Map("two", Var("k"), Proj(Var("k"), "c")))
     
     expressions.append( App(Abs( Var("z"), StringType(), App(Abs( Var("x"), vtype, Case(Var("x"), mapping)), Tag("one", Record(rd1), vtype))), String("appel")) )
 
     # case <varianttag = {'}> as VTYPE of ( <varianttag = record1> => record1.a | <varianttag2 = record2> => record2.b ) 
-    expressions.append( Case(  Tag("one", Record({'a': Integer(1), 'b': Integer(2)}), VType( { "one": RType({'a': IntType, 'b': IntType}), "two": RType({'c': IntType, 'd': IntType}) } )) , set([Map('one', Record({'a': Integer(1), 'b': Integer(2)}), Proj(Record({'a': Integer(1), 'b': Integer(2)}), 'a')), Map('two', {'c': Integer(3), 'd': Integer(4)}, Proj(Record({'c': Integer(3), 'd': Integer(4)}), 'c'))]) ))
+    expressions.append( Case(  Tag("one", Record({'a': Integer(1), 'b': Integer(2)}), VType( { "one": RType({'a': IntType, 'b': IntType}), "two": RType({'c': IntType, 'd': IntType}) } )) , set([Map('one', Var("l"), Proj(Var("l"), 'a')), Map('two', Var("k"), Proj(Var("k"), 'c'))]) ))
 
     for exp in expressions:
         print('')

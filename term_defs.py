@@ -136,7 +136,7 @@ class Proj(Term):
         self.label = label
     
     def __str__(self):
-        return str(self.record) + "." + str(self.label)
+        return "Proj(" + str(self.record) + "." + str(self.label) + ")"
 
     def __eq__(self, other):
         return (type(other) == type(self)) and other.record == self.record and other.label == self.label
@@ -183,16 +183,16 @@ class Case(Term):
 
 
 class Map(Term):
-    def __init__(self, subtype_label, object, mapped_action):
+    def __init__(self, subtype_label, abstr, mapped_action):
         self.subtype_label = subtype_label
-        self.object = object
+        self.abstr = abstr
         self.mapped_action = mapped_action
 
     def __str__(self):
-        return "<" + str(self.subtype_label) + "=" + str(self.object) + "> => " + str(self.mapped_action)
+        return "<" + str(self.subtype_label) + "=" + str(self.abstr) + "> => " + str(self.mapped_action)
 
     def __eq__(self, other):
-        return (type(other) == type(self)) and other.subtype_label == self.subtype_label and other.object == self.object and other.mapped_action == self.mapped_action
+        return (type(other) == type(self)) and other.subtype_label == self.subtype_label and other.abstr == self.abstr and other.mapped_action == self.mapped_action
     
     def __hash__(self):
         return str(str(self.subtype_label) + str(self.mapped_action)).__hash__()
