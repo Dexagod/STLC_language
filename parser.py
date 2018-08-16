@@ -34,7 +34,8 @@ class MyLexer(Lexer):
     THEN = TokenDef(r'then')
     ELSE = TokenDef(r'else')
     FI = TokenDef(r'fi')
-    END = TokenDef(r'end')
+    
+    DOLLAR = TokenDef(r'\$')
     
     CASE = TokenDef(r'case')
     OF = TokenDef(r'of')
@@ -42,8 +43,7 @@ class MyLexer(Lexer):
     SA = TokenDef(r'sa')
     FIX = TokenDef(r'fix')
 
-    START = TokenDef(r'start')
-    STOP = TokenDef(r'stop')
+    EVAL = TokenDef(r'eval')
 
     INTEGERTYPE = TokenDef(r'int')
     FLOATTYPE = TokenDef(r'float')
@@ -66,12 +66,12 @@ class MyParser(Parser):
     LEXER = MyLexer
     START = 'e'
 
-    @attach('e : START e STOP COMMA e')
+    @attach('e : EVAL e SEMICOL COMMA e')
     def arrayfi(self, start, exp, stop, comma, tail):
         return  [exp] + tail
     
 
-    @attach('e : START e STOP')
+    @attach('e : EVAL e SEMICOL')
     def arrayfiend(self, start, exp, stop):
         return  [exp]
 
@@ -79,7 +79,7 @@ class MyParser(Parser):
     def brackets(self, lparen, expr, rparen):
         return  expr 
     
-    @attach('e : BACKSLASH VARNAME COLON e POINT e END')
+    @attach('e : BACKSLASH VARNAME COLON e POINT e DOLLAR')
     def lambda_abstraction(self, lambda_token, param, colon, giventype, point, body, abstr_end):
         return Abs(Var(param), giventype, body)
 
