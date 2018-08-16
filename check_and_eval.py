@@ -3,8 +3,6 @@ from term_defs import *
 from type_defs import *
 
 def typecheck_exp(exp, context):
-
-    print("checking", exp, context)
     
     exp_class = type(exp)
 
@@ -57,14 +55,10 @@ def typecheck_exp(exp, context):
         
         return_type = None
         for m in exp.mapping:
-            print("HERE", m)
             mapped_type = variant_type.get_type(m.subtype_label)    
             newcontext = copy.deepcopy(context)
-            print("-------------")
-            print(m.abstr)
             newcontext[m.abstr.get_label()] = variant_type.get_type(m.subtype_label)
             mapped_record_type = typecheck_exp(m.mapped_action, newcontext)
-            print(mapped_record_type)
             # TODO:: THIS DOES NOT USE THE VARIANT TYPE>
             if return_type == None:
                 return_type = mapped_record_type
@@ -389,7 +383,6 @@ def application_substitution(abstraction_body, abstraction_param, arg):
 
 def substitute_expression(exp):
     expr_kind = type(exp)
-    print("Subst_exp", exp)
 
     if expr_kind == Plus:
         newexp = copy.deepcopy(exp.left)
@@ -430,7 +423,6 @@ def evaluate_expression(exp):
     exp_copy = copy.deepcopy(exp)
     evaluated = eval_exp(exp_copy)
     while evaluated != exp:
-        print("")
         exp = evaluated
         exp_copy = copy.deepcopy(exp)
         evaluated = eval_exp(exp_copy)

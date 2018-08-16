@@ -34,11 +34,16 @@ class MyLexer(Lexer):
     THEN = TokenDef(r'then')
     ELSE = TokenDef(r'else')
     FI = TokenDef(r'fi')
+    END = TokenDef(r'end')
     
     CASE = TokenDef(r'case')
     OF = TokenDef(r'of')
     AS = TokenDef(r'as')
+    SA = TokenDef(r'sa')
     FIX = TokenDef(r'fix')
+
+    START = TokenDef(r'start')
+    STOP = TokenDef(r'stop')
 
     INTEGERTYPE = TokenDef(r'int')
     FLOATTYPE = TokenDef(r'float')
@@ -61,11 +66,20 @@ class MyParser(Parser):
     LEXER = MyLexer
     START = 'e'
 
+    @attach('e : START e STOP COMMA e')
+    def arrayfi(self, start, exp, stop, comma, tail):
+        return  [exp] + tail
+    
+
+    @attach('e : START e STOP')
+    def arrayfiend(self, start, exp, stop):
+        return  [exp]
+
     @attach('e : LPAREN e RPAREN')
     def brackets(self, lparen, expr, rparen):
         return  expr 
     
-    @attach('e : BACKSLASH VARNAME COLON e POINT e SEMICOL')
+    @attach('e : BACKSLASH VARNAME COLON e POINT e END')
     def lambda_abstraction(self, lambda_token, param, colon, giventype, point, body, abstr_end):
         return Abs(Var(param), giventype, body)
 
@@ -152,7 +166,7 @@ class MyParser(Parser):
     def recordproj(self, record, brac, label, rbrac):
         return Proj(record, label)    
 
-    @attach('e : LHOOK VARNAME ASSIGN e RHOOK AS e SEMICOL')
+    @attach('e : LHOOK VARNAME ASSIGN e RHOOK AS e SA')
     def tag(self, lhook, label, assign, record, rhook, _as, varianttype, scol):
         return Tag(label, record, varianttype)  
 

@@ -1,28 +1,28 @@
-\x:int.x; <- 5
-\x:int.x; <- (5)
-\y:(int->int). y ; <- \x:int. x ; 
-\y:int. \z:int. y + z ;; <- 11 <- 10
-\y:(int->int). \z:int.  y <- z ;; <- \x:int. x ; <- 18
-5 + 6
-5 - 6
-5 * 6
-5 / 6
-5 + (6 * 7)
-5 > (6 + 7)
-5 <= (6 + 7)
-5 == 5
-if true then 5 else 6 fi
-if false then 5 else (5 + (6 * 7)) fi
-if true then (5 / 9) else 6 fi
-if 3 > 5 then 5 else 6 fi
-if (5 < 3) then 5 else 6 fi
-if 4 >= 4 then 5 else 6 fi
-{a=1, b="hey", c=true}
-{a=1, b="hey", c=true}[b]
-\z:{a:int, b:string, c:bool}. z[a] ; <- {a=1, b="hey", c=true}
-<<one: {a: int, b: int}, two: {c: int, d:int} >>
-<<one = {a=1, b=2}>> as <<one: {a: int, b: int}, two: {c: int, d:int} >> ; 
-<< one = {a= 1, b= 2} >> as <<one: {a: int, b: int}, two: {c: int, d:int} >>;
-case << one = {a= 1, b= 2} >> as <<one: {a: int, b: int}, two: {c: int, d:int} >>;  of  { one = x => x[a] | two = y => y[c]} 
-case << one = {a= 1, b= 2} >> as <<one: {a: int, b: int}, two: {c: int, d:int} >>;  of  { one = x => 10 | two = y => 20} 
-fix \fct:int->int. \x:int. if x==0 then 1 else x * (fct <- (x-1)) fi ;; <- 5
+start \x:int.x end <- 5 stop ,
+start \x:int.x end <- (5) stop ,
+start \y:(int->int). y end <- \x:int. x end stop ,
+start \y:int. \z:int. y + z end end <- 11 <- 10 stop ,
+start \y:(int->int). \z:int.  y <- z end end <- \x:int. x end <- 18 stop ,
+start 5 + 6 stop ,
+start 5 - 6 stop ,
+start 5 * 6 stop ,
+start 5 / 6 stop ,
+start 5 + (6 * 7) stop ,
+start 5 > (6 + 7) stop ,
+start 5 <= (6 + 7) stop ,
+start 5 == 5 stop ,
+start if true then 5 else 6 fi stop ,
+start if false then 5 else (5 + (6 * 7)) fi stop ,
+start if true then (5 / 9) else 6 fi stop ,
+start if 3 > 5 then 5 else 6 fi stop ,
+start if (5 < 3) then 5 else 6 fi stop ,
+start if 4 >= 4 then 5 else 6 fi stop ,
+start {a=1, b="hey", c=true} stop ,
+start {a=1, b="hey", c=true}[b] stop ,
+start \z:{a:int, b:string, c:bool}. z[a] end <- {a=1, b="hey", c=true} stop ,
+start <<one: {a: int, b: int}, two: {c: int, d:int} >> stop ,
+start <<one = {a=1, b=2}>> as <<one: {a: int, b: int}, two: {c: int, d:int} >> sa  stop ,
+start << one = {a= 1, b= 2} >> as <<one: {a: int, b: int}, two: {c: int, d:int} >> sa stop ,
+start case << one = {a= 1, b= 2} >> as <<one: {a: int, b: int}, two: {c: int, d:int} >> sa of  { one = x => x[a] | two = y => y[c]}  stop ,
+start case << one = {a= 1, b= 2} >> as <<one: {a: int, b: int}, two: {c: int, d:int} >> sa of  { one = x => 10 | two = y => 20} stop ,
+start fix \fct:int->int. \x:int. if x==0 then 1 else x * (fct <- (x-1)) fi end end <- 5 stop
