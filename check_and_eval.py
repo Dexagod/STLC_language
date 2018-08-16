@@ -107,7 +107,7 @@ def typecheck_exp(exp, context):
         then_type = typecheck_exp(exp.get_then(), context)
         else_type = typecheck_exp(exp.get_else(), context)
         if then_type != else_type:
-            s = "If-statement then has type '" + exp.get_then().get_type() + "' while else has type '" + exp.get_else().get_type() + "'"
+            s = "If-statement then has type '" + str(type(exp.get_then())) + "' while else has type '" + str(type(exp.get_else())) + "'"
             raise Exception(s)
         else:
             return else_type
@@ -152,8 +152,8 @@ def typecheck_exp(exp, context):
 
 def eval_exp(exp):
     
-    print("EVAL", exp)
-
+    # print("")
+    # print("EVAL", exp)
     exp_class = type(exp)
 
     if exp_class == Integer or exp_class == Float or exp_class == String or exp_class == Boolean:
@@ -204,19 +204,10 @@ def eval_exp(exp):
         else:
             return exp
     
-    # elif exp_class == Fix:
-    #     # TODO:: FIX THIS
-    #     if type(exp.term) != Abs:
-    #         exp.term = eval_exp(exp.term)
-    #         return exp
-    #     else:
-    #         t2 = copy.deepcopy(exp.term.body)
-    #         substituted_term = application_substitution(t2, exp.term.param, exp) 
-    #         return substituted_term
-    
 
     elif exp_class == Fix:
-        return eval_exp(App(Abs(Var("f"), SType, App( Abs(Var("x"), SType, App( Var("f"), App(Var("x"), Var("x")) )), Abs(Var("x"), xtype, App( Var("f"), App(Var("x"), Var("x")))))), exp.term))
+
+        return App( Abs(Var("fix_function_variable_replacement"), "ftype", Abs(Var("fix_y_variable_replacement"), "ytype", App(App(Abs(Var("fix_x_variable_replacement"), "xtype", App(Var("fix_function_variable_replacement"), Abs(Var("fix_y_variable_replacement"), "ytype", App(App(Var("fix_x_variable_replacement"), Var("fix_x_variable_replacement")), Var("fix_y_variable_replacement"))))), Abs(Var("fix_x_variable_replacement"), "xtype", App(Var("fix_function_variable_replacement"), Abs(Var("fix_y_variable_replacement"), "ytype", App(App(Var("fix_x_variable_replacement"), Var("fix_x_variable_replacement")), Var("fix_y_variable_replacement")))))), Var("fix_y_variable_replacement")))) , exp.term)
 
     elif exp_class == If:
         if not issubclass(type(exp.get_cond()), Value):
@@ -227,9 +218,9 @@ def eval_exp(exp):
             cond_val = exp.get_cond()
             if type(cond_val) == Boolean:
                 if cond_val.is_true():
-                    return eval_exp(exp.get_then())
+                    return exp.get_then()
                 else:
-                    return eval_exp(exp.get_else())
+                    return exp.get_else()
             else:
                 return exp
     
@@ -295,6 +286,19 @@ def eval_exp(exp):
                 return e_abs.get_value(e_arg)
             except Exception:
                 raise Exception("Record " + str(e_abs) + " does not contain label " + str(e_arg))
+            
+
+        if type(e_abs) == Record:
+            # print("E-PROJRCD")
+            try:
+                return e_abs.get_value(e_arg)
+            except Exception:
+                raise Exception("Record " + str(e_abs) + " does not contain label " + str(e_arg))
+
+        if type(e_abs) == Fix:
+            # print("E-PROJRCD")
+            eval_abs = eval_exp(e_abs)
+            return eval_exp(App(eval_abs, e_arg))
 
         if not exp.is_value and (issubclass(type(e_abs), Value) and issubclass(type(e_arg), Value)):
             exp.set_value()
@@ -304,7 +308,9 @@ def eval_exp(exp):
 
 
 def application_substitution(abstraction_body, abstraction_param, arg):
-    # print("substitution", abstraction_body, "|", abstraction_param, "|", arg)
+    # print("application_substitution", abstraction_body, "########",  abstraction_param, "################", arg)
+
+    # print("")
 
     if type(abstraction_body) == Integer or type(abstraction_body) == Float or type(abstraction_body) == String or type(abstraction_body) == Boolean:
         return abstraction_body
@@ -312,7 +318,9 @@ def application_substitution(abstraction_body, abstraction_param, arg):
     if type(abstraction_body) is Var:
         if abstraction_body == abstraction_param:
             # print("SUBSTITUTED", " - " , abstraction_body, " - " , arg)
-            return arg # TODO:: deepcopy
+
+            # print("")   
+            return copy.deepcopy(arg) # TODO:: deepcopy
         else:
             # print("SUBST - VAR - NO")
             return abstraction_body
@@ -373,9 +381,15 @@ def application_substitution(abstraction_body, abstraction_param, arg):
         return abstraction_body
      
     
+    elif type(abstraction_body) is If:
+        abstraction_body.cond = application_substitution(abstraction_body.cond, abstraction_param, arg)
+        abstraction_body.then = application_substitution(abstraction_body.then, abstraction_param, arg)
+        abstraction_body._else = application_substitution(abstraction_body._else, abstraction_param, arg)
+        return abstraction_body
 
 def substitute_expression(exp):
     expr_kind = type(exp)
+    print("Subst_exp", exp)
 
     if expr_kind == Plus:
         newexp = copy.deepcopy(exp.left)
@@ -416,6 +430,7 @@ def evaluate_expression(exp):
     exp_copy = copy.deepcopy(exp)
     evaluated = eval_exp(exp_copy)
     while evaluated != exp:
+        print("")
         exp = evaluated
         exp_copy = copy.deepcopy(exp)
         evaluated = eval_exp(exp_copy)

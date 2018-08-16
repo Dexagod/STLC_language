@@ -20,8 +20,12 @@ if __name__ == "__main__":
         result = parser.parse(line)
         print(result)
         _type = typecheck_expression(result, dict())
+        print("")
+        print("TYPECHECKED")
         print(_type)
         _eval = evaluate_expression(result)
+        print("")
+        print("EVALUATED")
         print(_eval)
         print("")
         

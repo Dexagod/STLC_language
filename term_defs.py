@@ -13,7 +13,8 @@ class Integer(Term, Value):
     def __init__(self, value):
         self.value = value
     def __str__(self):
-        return str("Integer(" + str(self.value) + ")")
+        # return str("Integer(" + str(self.value) + ")")
+        return str(self.value)
     def __eq__(self, other):
         return (type(other) == type(self)) and other.value == self.value
 
@@ -21,7 +22,8 @@ class Float(Term, Value):
     def __init__(self, value):
         self.value = value
     def __str__(self):
-        return str("Float("+ str(self.value) +")")
+        # return str("Float("+ str(self.value) +")")
+        return str(self.value)
     def __eq__(self, other):
         return (type(other) == type(self)) and other.value == self.value
 
@@ -29,7 +31,8 @@ class String(Term, Value):
     def __init__(self, value):
         self.value = value
     def __str__(self):
-        return str("String("+ str(self.value) +")")
+        # return str("String("+ str(self.value) +")")
+        return str(self.value)
     def __eq__(self, other):
         return (type(other) == type(self)) and other.value == self.value
 
@@ -37,7 +40,8 @@ class Boolean(Term, Value):
     def __init__(self, value):
         self.value = value
     def __str__(self):
-        return str("Boolean("+ str(self.value) +")")
+        # return str("Boolean("+ str(self.value) +")")
+        return str(self.value)
     def is_true(self):
         return bool(self.value) == True
     def __eq__(self, other):
@@ -49,7 +53,8 @@ class Var(Term):
         self.T = T
 
     def __str__(self):
-        return "Var(" + str(self.label) + ")"
+        # return "Var(" + str(self.label) + ")"
+        return str(self.label)
 
     def __eq__(self, other):
         return (type(other) == type(self)) and (other.label == self.label)
@@ -64,7 +69,8 @@ class Abs(Term, Value):
         self.body = body
 
     def __str__(self):
-        return "Abs(" + str(self.param) + ":" + str(self.given_type) + "," + str(self.body) + ")"
+        # return "Abs(" + str(self.param) + ":" + str(self.given_type) + ".(" + str(self.body) + ")"
+        return "\\" + str(self.param) + ":" + str(self.given_type) + ".(" + str(self.body) + ")"
 
     def __eq__(self, other):
         return (type(other) == type(self)) and (other.param == self.param) and (other.body == self.body) and (other.given_type == self.given_type)
@@ -89,7 +95,8 @@ class App(Term):
         self.value = False
     
     def __str__(self):
-        return "App(" + str(self.abs) + "," + str(self.arg) + ")"
+        # return "App(" + str(self.abs) + "," + str(self.arg) + ")"
+        return "(" + str(self.abs) + "<-" + str(self.arg) + ")"
 
     def __eq__(self, other):
         return (type(other) == type(self)) and (other.abs == self.abs) and (other.arg == self.arg)
@@ -214,10 +221,10 @@ class If(Term):
         self._else = _else
 
     def __str__(self):
-        return "(if " + str(self.cond) + " then " + str(self.then) + " else " + str(self._else) + ")"
+        return "if " + str(self.cond) + " then " + str(self.then) + " else " + str(self._else) + " fi"
 
     def __eq__(self, other):
-        return type(other) == type(self) and self.__dict__ == other.__dict__
+        return type(other) == type(self) and self.cond == other.cond and self.then == other.then and self._else == other._else
     
     def get_cond(self):
         return self.cond
@@ -236,6 +243,8 @@ class Plus(Term):
     def __str__(self):
         return str(self.left) + " + " + str(self.right)
 
+    def __eq__(self, other):
+        return type(other) == type(self) and self.left == other.left and self.right == other.right
 
 class Minus(Term):
     def __init__(self, left, right):
@@ -244,6 +253,8 @@ class Minus(Term):
 
     def __str__(self):
         return str(self.left) + " - " + str(self.right)
+    def __eq__(self, other):
+        return type(other) == type(self) and self.left == other.left and self.right == other.right
 
 class Times(Term):
     def __init__(self, left, right):
@@ -252,6 +263,8 @@ class Times(Term):
 
     def __str__(self):
         return str(self.left) + " * " + str(self.right)
+    def __eq__(self, other):
+        return type(other) == type(self) and self.left == other.left and self.right == other.right
 
 class Div(Term):
     def __init__(self, left, right):
@@ -260,6 +273,8 @@ class Div(Term):
 
     def __str__(self):
         return str(self.left) + " / " + str(self.right)
+    def __eq__(self, other):
+        return type(other) == type(self) and self.left == other.left and self.right == other.right
 
 class EQ(Term):
     def __init__(self, left, right):
@@ -267,6 +282,8 @@ class EQ(Term):
         self.right = right
     def __str__(self):
         return str(self.left) + " == " + str(self.right)
+    def __eq__(self, other):
+        return type(other) == type(self) and self.left == other.left and self.right == other.right
 
 class LT(Term):
     def __init__(self, left, right):
@@ -274,6 +291,8 @@ class LT(Term):
         self.right = right
     def __str__(self):
         return str(self.left) + " < " + str(self.right)
+    def __eq__(self, other):
+        return type(other) == type(self) and self.left == other.left and self.right == other.right
     
 
 class GT(Term):
@@ -282,6 +301,8 @@ class GT(Term):
         self.right = right
     def __str__(self):
         return str(self.left) + " > " + str(self.right)
+    def __eq__(self, other):
+        return type(other) == type(self) and self.left == other.left and self.right == other.right
 
 
 class LE(Term):
@@ -290,6 +311,8 @@ class LE(Term):
         self.right = right
     def __str__(self):
         return str(self.left) + " <= " + str(self.right)
+    def __eq__(self, other):
+        return type(other) == type(self) and self.left == other.left and self.right == other.right
 
 class GE(Term):
     def __init__(self, left, right):
@@ -297,6 +320,8 @@ class GE(Term):
         self.right = right
     def __str__(self):
         return str(self.left) + " >= " + str(self.right)
+    def __eq__(self, other):
+        return type(other) == type(self) and self.left == other.left and self.right == other.right
 
 
 class Seq(Term):
@@ -305,6 +330,8 @@ class Seq(Term):
         self.tail = tail
     def __str__(self):
         return str(self.head) + " ; " + str(self.tail)
+    def __eq__(self, other):
+        return type(other) == type(self) and self.head == other.head and self.tail == other.tail
     
     def get_list(self):
         h = None

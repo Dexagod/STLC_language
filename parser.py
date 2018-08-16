@@ -10,7 +10,6 @@ from ast import literal_eval
 class MyLexer(Lexer):
 
     COLON = TokenDef(r':')
-    ARROW = TokenDef(r'->')
     DARROW = TokenDef(r'=>')
 
     LPAREN = TokenDef(r'\(')
@@ -27,17 +26,19 @@ class MyLexer(Lexer):
     COMMA = TokenDef(r',')
     STRAIGHT = TokenDef(r'\|')
 
-    OP = TokenDef(r'(\<-|\+|-|\*|\/|\<=|\>=|==|\<|\>)')
+    OP = TokenDef(r'(\<-|-\>|\+|-|\*|\/|\<=|\>=|==|\<|\>)')
 
     ASSIGN = TokenDef(r'=')
     
     IF = TokenDef(r'if')
     THEN = TokenDef(r'then')
     ELSE = TokenDef(r'else')
+    FI = TokenDef(r'fi')
     
     CASE = TokenDef(r'case')
     OF = TokenDef(r'of')
     AS = TokenDef(r'as')
+    FIX = TokenDef(r'fix')
 
     INTEGERTYPE = TokenDef(r'int')
     FLOATTYPE = TokenDef(r'float')
@@ -68,8 +69,8 @@ class MyParser(Parser):
     def lambda_abstraction(self, lambda_token, param, colon, giventype, point, body, abstr_end):
         return Abs(Var(param), giventype, body)
 
-    @attach('e : IF e THEN e ELSE e')
-    def if_stmt(self, i, cond, t, a, e, b):
+    @attach('e : IF e THEN e ELSE e FI')
+    def if_stmt(self, i, cond, t, a, e, b, fi):
         return If(cond, a, b)
 
     @attach('e : INTEGERTYPE')
@@ -101,10 +102,6 @@ class MyParser(Parser):
         if "false" in _bool or "False" in _bool:
             return(Boolean(False))
         return Boolean(True)
-    
-    @attach('e : LPAREN e ARROW e RPAREN')
-    def compositefunctiontype(self, lparen, lefttype, arrow, righttype, rightparen):
-        return CType(lefttype, righttype)
 
     @attach('e : LBRACE VARNAME ASSIGN e COMMA e')
     def recordhead(self, lbrace, left, assign, right, delim, tail):
@@ -203,14 +200,16 @@ class MyParser(Parser):
         s.add( Map(label, Var(varname), mapped_action) )
         return s
 
-    # @attach('e : SEMICOL')
-    # def mapendsingle(self, scol):
-    #     return set() 
+    @attach('e : FIX e' )
+    def fix(self, fix, term):
+        return Fix(term)
     
     @attach('e : e OP e')
     def condit(self, left, op, right):
         if op == '<-':
             return App(left, right)
+        if op == '->':
+            return CType(left, right)
         if op == '<=':
             return LE(left, right)
         if op == '>=':
