@@ -1,0 +1,46 @@
+eval 
+    fix 
+        \fct:int->int. 
+            \x:int. 
+                if x==0 
+                    then 1 
+                    else x * (fct <- (x-1)) 
+                fi 
+            $ 
+        $ <- 5 
+;,
+
+eval 
+    fix 
+        \fct:int->bool. 
+            \x:int. 
+                if x == 0 
+                    then true
+                    else (
+                        if x == 1
+                        then false
+                        else fct <- (x-1)
+                        fi
+                    )
+                fi 
+            $ 
+        $ <- 5 
+;,
+
+eval 
+    fix 
+        \fct:int->bool. 
+            \x:int. 
+                if x == 0 
+                    then true
+                    else (
+                        if x == 1
+                        then false
+                        else fct <- (x-2)
+                        fi
+                    )
+                fi 
+            $ 
+        $ <- 6
+
+;

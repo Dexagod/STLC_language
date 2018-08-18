@@ -101,7 +101,7 @@ def typecheck_exp(exp, context):
         then_type = typecheck_exp(exp.get_then(), context)
         else_type = typecheck_exp(exp.get_else(), context)
         if then_type != else_type:
-            s = "If-statement then has type '" + str(type(exp.get_then())) + "' while else has type '" + str(type(exp.get_else())) + "'"
+            s = "If-statement then has type '" + str(then_type) + "' while else has type '" + str(else_type) + "'"
             raise Exception(s)
         else:
             return else_type
@@ -109,6 +109,7 @@ def typecheck_exp(exp, context):
     elif exp_class == Plus or exp_class == Minus or exp_class == Times or exp_class == Div:
         left_type = typecheck_exp(exp.left, context)
         right_type = typecheck_exp(exp.right, context)
+        
         if type(left_type) != IntType and type(left_type) != FloatType:
             raise Exception("Left argument of plus is not of type 'Integer' or type 'Float'")
         if type(right_type) != IntType and type(right_type) != FloatType:

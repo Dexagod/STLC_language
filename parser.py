@@ -71,6 +71,11 @@ class MyParser(Parser):
         return  [exp] + tail
     
 
+    @attach('e : EVAL e SEMICOL COMMA')
+    def arrayfiwrongcomma(self, start, exp, stop, comma):
+        return  [exp]
+    
+
     @attach('e : EVAL e SEMICOL')
     def arrayfiend(self, start, exp, stop):
         return  [exp]

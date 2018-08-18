@@ -8,20 +8,24 @@ if __name__ == "__main__":
     parser = MyParser()
     print("Parser setup finished")
 
-
-    with open('program.ayylmao', 'r') as myfile:
-        data=myfile.read()
-        parsed_data = parser.parse(data)
-        print(parsed_data)
-        for expression in parsed_data:
-            print("")
-            _type = typecheck_expression(expression, dict())
-            print("")
-            print("TYPECHECKED")
-            print(_type)
-            _eval = evaluate_expression(expression)
-            print("")
-            print("EVALUATED")
-            print(_eval)
-            print("")
+    for arg in sys.argv[1:]:
+        print("Interpreting file: ", str(arg))
+        with open(arg, 'r') as myfile:
+            data=myfile.read()
+            print(data)
+            parsed_data = parser.parse(data)
+            print(parsed_data)
+            for expression in parsed_data:
+                print("")
+                _type = typecheck_expression(expression, dict())
+                print("Expression:")
+                print(" ", expression)
+                print("")
+                print("Typecheck:")
+                print(" ", _type)
+                print("")
+                _eval = evaluate_expression(expression)
+                print("Evaluation:")
+                print(" ", _eval)
+                print("")
 
