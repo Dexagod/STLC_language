@@ -36,9 +36,6 @@ def typecheck_exp(exp, context):
     if exp_class == Integer:
         return IntType()
 
-    if exp_class == Float:
-        return FloatType()
-
     if exp_class == String:
         return StringType()
 
@@ -132,40 +129,6 @@ def typecheck_exp(exp, context):
             raise Exception(s)
         else:
             return else_type
-    
-    elif exp_class == Plus or exp_class == Minus or exp_class == Times or exp_class == Div:
-        left_type = typecheck_exp(exp.left, context)
-        right_type = typecheck_exp(exp.right, context)
-        
-        if type(left_type) != IntType and type(left_type) != FloatType:
-            raise Exception("Left argument of plus is not of type 'Integer' or type 'Float'")
-        if type(right_type) != IntType and type(right_type) != FloatType:
-            raise Exception("Right argumeright_typent of plus is not of type 'Integer' or type 'Float'")
-        if left_type != right_type:
-            raise Exception("Operand arguments must both be of the same type.")
-        return left_type
-
-    elif exp_class == LT or exp_class == GT or exp_class == LE or exp_class == GE:
-        left_type = typecheck_exp(exp.left, context)
-        right_type = typecheck_exp(exp.right, context)
-        if type(left_type) != IntType and type(left_type) != FloatType:
-            raise Exception("Left argument of plus is not of type 'Integer' or type 'Float'")
-        if type(right_type) != IntType and type(right_type) != FloatType:
-            raise Exception("Right argument of plus is not of type 'Integer' or type 'Float'")
-        if left_type != right_type:
-            raise Exception("Operand arguments must both be of the same type.")
-        return BoolType()
-    
-    elif exp_class == EQ:
-        left_type = typecheck_exp(exp.left, context)
-        right_type = typecheck_exp(exp.right, context)
-        if not (type(left_type) == IntType or type(left_type) == FloatType or type(left_type) == StringType or type(left_type) == BoolType):
-            raise Exception("Left argument of equals is not valid")
-        if not (type(right_type) == IntType or type(right_type) == FloatType or type(right_type) == StringType or type(right_type) == BoolType):
-            raise Exception("Right argument of equals is not valid'")
-        if left_type != right_type:
-            raise Exception("Operand arguments must both be of the same type.")
-        return BoolType()
 
     else:
         return exp
@@ -208,7 +171,7 @@ def eval_exp(exp):
             # print("E-ISZEROSUCC")
             return Boolean(False)
 
-    if exp_class == Integer or exp_class == Float or exp_class == String or exp_class == Boolean:
+    if exp_class == String:
         return exp
 
     if exp_class == Abs: # Abs
@@ -333,10 +296,6 @@ def application_substitution(abstraction_body, abstraction_param, arg):
     # print("application_substitution", abstraction_body, "########",  abstraction_param, "################", arg)
 
     # print("")
-
-    if type(abstraction_body) == Integer or type(abstraction_body) == Float or type(abstraction_body) == String or type(abstraction_body) == Boolean:
-        return abstraction_body
-
     if type(abstraction_body) is Var:
         if abstraction_body == abstraction_param:
             # print("SUBSTITUTED", " - " , abstraction_body, " - " , arg)

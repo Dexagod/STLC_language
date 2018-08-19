@@ -78,12 +78,6 @@ class IntType(Type):
     def __eq__(self, other):
         return type(other) == type(self)
 
-class FloatType(Type):
-    def __str__(self):
-        return "Float"
-    def __eq__(self, other):
-        return type(other) == type(self)
-
 class StringType(Type):
     def __str__(self):
         return "String"

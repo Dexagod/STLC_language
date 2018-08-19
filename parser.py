@@ -124,10 +124,6 @@ class MyParser(Parser):
     def type_int(self, _type):
         return IntType()
 
-    # @attach('e : FLOATTYPE')
-    # def type_float(self, _type):
-    #     return FloatType()
-
     @attach('t : STRINGTYPE')
     def type_str(self, _type):
         return StringType()
@@ -135,14 +131,6 @@ class MyParser(Parser):
     @attach('t : BOOLTYPE')
     def type_bool(self, _type):
         return BoolType()
-
-    # @attach('e : INTEGER')
-    # def const_int(self, integer):
-    #     return Integer(int(integer))
-
-    # @attach('e : FLOAT')
-    # def const_float(self, _float):
-    #     return Float(float(_float))
 
     @attach('e : BOOLEAN')
     def const_bool(self, _bool):

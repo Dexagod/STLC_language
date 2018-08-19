@@ -8,21 +8,12 @@ class Term: pass
 # int
 # float
 # bool
-        
+
 class Integer(Term, Value):
     def __init__(self, value):
         self.value = value
     def __str__(self):
         # return str("Integer(" + str(self.value) + ")")
-        return str(self.value)
-    def __eq__(self, other):
-        return (type(other) == type(self)) and other.value == self.value
-
-class Float(Term, Value):
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        # return str("Float("+ str(self.value) +")")
         return str(self.value)
     def __eq__(self, other):
         return (type(other) == type(self)) and other.value == self.value
