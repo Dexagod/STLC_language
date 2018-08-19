@@ -18,8 +18,10 @@ class MyLexer(Lexer):
     RBRACE = TokenDef(r'\}')
     LBRACKET = TokenDef(r'\[')
     RBRACKET = TokenDef(r'\]')
-    LHOOK = TokenDef(r'\<\<')
-    RHOOK = TokenDef(r'\>\>')
+    APPLICATE = TokenDef(r'\<-')
+    TYPEARROW = TokenDef(r'-\>')
+    LHOOK = TokenDef(r'\<')
+    RHOOK = TokenDef(r'\>')
     BACKSLASH = TokenDef(r'\\')
     SEMICOL = TokenDef(r'\;')
     POINT = TokenDef(r'\.')
@@ -33,8 +35,6 @@ class MyLexer(Lexer):
 
 
     # OP = TokenDef(r'(\<-|-\>|\+|-|\*|\/|\<=|\>=|==|\<|\>)')
-    APPLICATE = TokenDef(r'\<-')
-    TYPEARROW = TokenDef(r'-\>')
 
     ASSIGN = TokenDef(r'=')
     

@@ -9,6 +9,9 @@ def typecheck_exp(exp, context):
     if exp_class == Zero:
         return IntType()
 
+    if exp_class == Boolean:
+        return BoolType()
+
     if exp_class == Succ:
         term_type = typecheck_exp(exp.value, context)
         if type(term_type) != IntType:
@@ -137,8 +140,8 @@ def typecheck_exp(exp, context):
 
 def eval_exp(exp):
     
-    # print("")
     # print("EVAL", exp)
+
     exp_class = type(exp)
 
     if exp_class == Zero:
@@ -172,6 +175,9 @@ def eval_exp(exp):
             return Boolean(False)
 
     if exp_class == String:
+        return exp
+
+    if exp_class == Boolean:
         return exp
 
     if exp_class == Abs: # Abs
@@ -293,9 +299,9 @@ def eval_exp(exp):
 
 
 def application_substitution(abstraction_body, abstraction_param, arg):
+    
     # print("application_substitution", abstraction_body, "########",  abstraction_param, "################", arg)
 
-    # print("")
     if type(abstraction_body) is Var:
         if abstraction_body == abstraction_param:
             # print("SUBSTITUTED", " - " , abstraction_body, " - " , arg)

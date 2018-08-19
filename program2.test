@@ -3,7 +3,7 @@ eval
 ;,
 
 eval 
-    {a=0, b="hey", c=true}[b]  
+    {a=0, b="hey", c=true}[c]  
 ;,
 
 eval 
@@ -12,16 +12,16 @@ eval
     $ <- {a= 0, b="hey", c=true}  
 ;,
 eval 
-    \z:bool. 
+    \z:string. 
         z
-    $ <- ({a= 0, b="hey", c=true}[c])
+    $ <- ({a= 0, b="hey", c=true}[b])
 ;,
 
 eval 
     case 
-        << one = {a= succ 0, b= succ succ 0} >> 
+        < one = {a= succ 0, b= succ succ 0} > 
             as 
-                <<one: {a: int, b: int}, two: {c: int, d:int} >>
+                <one: {a: int, b: int}, two: {c: int, d:int} >
             sa 
         of  
             { one = x => x[a] | two = y => y[c]}   
@@ -29,9 +29,9 @@ eval
 
 eval 
     case 
-        << one = {a= succ 0, b= succ succ 0} >> 
+        < one = {a= succ 0, b= succ succ 0} > 
             as 
-                <<one: {a: int, b: int}, two: {c: int, d:int} >> 
+                <one: {a: int, b: int}, two: {c: int, d:int} > 
             sa 
         of  
             { one = x => "you picked one" | two = y => "you picked two"} ;
