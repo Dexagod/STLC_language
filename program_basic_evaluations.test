@@ -113,7 +113,7 @@ eval
 
 eval 
     if 4 >= 4 
-    then 5 
-    else 6 
+    then "Zeker waar!" 
+    else "Helemaal niet waar!"
     fi 
 ;

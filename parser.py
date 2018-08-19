@@ -26,6 +26,11 @@ class MyLexer(Lexer):
     COMMA = TokenDef(r',')
     STRAIGHT = TokenDef(r'\|')
 
+    SUCC = TokenDef(r'succ')
+    PRED = TokenDef(r'pred')
+    ZERO = TokenDef(r'0')
+
+
     OP = TokenDef(r'(\<-|-\>|\+|-|\*|\/|\<=|\>=|==|\<|\>)')
 
     ASSIGN = TokenDef(r'=')
