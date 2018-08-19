@@ -1,0 +1,46 @@
+eval 
+    fix 
+        \fct:int->int. 
+            \x:int. 
+                if iszero(x) 
+                    then x 
+                    else succ succ (fct <- (pred x)) 
+                fi 
+            $ 
+        $ <- succ succ succ succ succ 0 
+;,
+
+eval 
+    fix 
+        \fct:int->bool. 
+            \x:int. 
+                if iszero(x) 
+                    then true
+                    else (
+                        if iszero(pred x)
+                        then false
+                        else fct <- (pred pred x)
+                        fi
+                    )
+                fi 
+            $ 
+        $ <- (succ succ succ succ succ 0)
+;,
+
+eval 
+    fix 
+        \fct:int->bool. 
+            \x:int. 
+                if iszero(x) 
+                    then true
+                    else (
+                        if iszero(pred x)
+                        then false
+                        else fct <- (pred pred x)
+                        fi
+                    )
+                fi 
+            $ 
+        $ <- (succ succ succ succ succ succ 0)
+;,
+

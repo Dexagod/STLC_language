@@ -347,6 +347,39 @@ class Seq(Term):
             t = [self.tail]
         return h + t
 
+class Zero(Term, Value):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return str(0)
+    def __eq__(self, other):
+        return type(other) == type(self) and self.value == other.value
+
+class Succ(Term, Value):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return "succ " + str(self.value)
+    def __eq__(self, other):
+        return type(other) == type(self) and self.value == other.value
+
+class Pred(Term, Value):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return "pred " + str(self.value)
+    def __eq__(self, other):
+        return type(other) == type(self) and self.value == other.value
+
+class ZeroTest(Term, Value):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return "iszero (" + str(self.value) + ")"
+    def __eq__(self, other):
+        return type(other) == type(self) and self.value == other.value
+
+
 
 class Assign(Term):
     def __init__(self, var, body):

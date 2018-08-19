@@ -28,10 +28,13 @@ class MyLexer(Lexer):
 
     SUCC = TokenDef(r'succ')
     PRED = TokenDef(r'pred')
+    ISZERO = TokenDef(r'iszero')
     ZERO = TokenDef(r'0')
 
 
-    OP = TokenDef(r'(\<-|-\>|\+|-|\*|\/|\<=|\>=|==|\<|\>)')
+    # OP = TokenDef(r'(\<-|-\>|\+|-|\*|\/|\<=|\>=|==|\<|\>)')
+    APPLICATE = TokenDef(r'\<-')
+    TYPEARROW = TokenDef(r'-\>')
 
     ASSIGN = TokenDef(r'=')
     
@@ -59,9 +62,9 @@ class MyLexer(Lexer):
 
     WHITESPACE = TokenDef(r'[\s\n]+', ignore=True)
 
-    BOOLEAN = TokenDef(r'(true|True|False|false)')
-    FLOAT = TokenDef(r'\d+\.\d+')
-    INTEGER = TokenDef(r'\d+')
+    BOOLEAN = TokenDef(r'(true|false)')
+    # FLOAT = TokenDef(r'\d+\.\d+')
+    # INTEGER = TokenDef(r'\d+')
     VARNAME = TokenDef(r'[a-zA-Z_][a-zA-Z0-9_]*')
     STRING = TokenDef(r'"[^"]*"')
 
@@ -69,19 +72,23 @@ class MyLexer(Lexer):
 class MyParser(Parser):
 
     LEXER = MyLexer
-    START = 'e'
+    START = 'a'
 
-    @attach('e : EVAL e SEMICOL COMMA e')
+    @attach('a : EVAL e SEMICOL COMMA a')
     def arrayfi(self, start, exp, stop, comma, tail):
         return  [exp] + tail
     
+    @attach('a : EVAL e SEMICOL a')
+    def arrayfi2(self, start, exp, stop, comma, tail):
+        return  [exp] + tail
+    
 
-    @attach('e : EVAL e SEMICOL COMMA')
+    @attach('a : EVAL e SEMICOL COMMA')
     def arrayfiwrongcomma(self, start, exp, stop, comma):
         return  [exp]
     
 
-    @attach('e : EVAL e SEMICOL')
+    @attach('a : EVAL e SEMICOL')
     def arrayfiend(self, start, exp, stop):
         return  [exp]
 
@@ -89,7 +96,7 @@ class MyParser(Parser):
     def brackets(self, lparen, expr, rparen):
         return  expr 
     
-    @attach('e : BACKSLASH VARNAME COLON e POINT e DOLLAR')
+    @attach('e : BACKSLASH VARNAME COLON t POINT e DOLLAR')
     def lambda_abstraction(self, lambda_token, param, colon, giventype, point, body, abstr_end):
         return Abs(Var(param), giventype, body)
 
@@ -97,33 +104,49 @@ class MyParser(Parser):
     def if_stmt(self, i, cond, t, a, e, b, fi):
         return If(cond, a, b)
 
-    @attach('e : INTEGERTYPE')
+    @attach('e : SUCC e' )
+    def succ(self, pred, term):
+        return Succ(term)
+
+    @attach('e : PRED e' )
+    def pred(self, pred, term):
+        return Pred(term)
+
+    @attach('e : ZERO' )
+    def zero(self, term):
+        return Zero(term)
+
+    @attach('e : ISZERO LPAREN e RPAREN' )
+    def iszero(self, test, lparen, term, rparen):
+        return ZeroTest(term)
+
+    @attach('t : INTEGERTYPE')
     def type_int(self, _type):
         return IntType()
 
-    @attach('e : FLOATTYPE')
-    def type_float(self, _type):
-        return FloatType()
+    # @attach('e : FLOATTYPE')
+    # def type_float(self, _type):
+    #     return FloatType()
 
-    @attach('e : STRINGTYPE')
+    @attach('t : STRINGTYPE')
     def type_str(self, _type):
         return StringType()
 
-    @attach('e : BOOLTYPE')
+    @attach('t : BOOLTYPE')
     def type_bool(self, _type):
         return BoolType()
 
-    @attach('e : INTEGER')
-    def const_int(self, integer):
-        return Integer(int(integer))
+    # @attach('e : INTEGER')
+    # def const_int(self, integer):
+    #     return Integer(int(integer))
 
-    @attach('e : FLOAT')
-    def const_float(self, _float):
-        return Float(float(_float))
+    # @attach('e : FLOAT')
+    # def const_float(self, _float):
+    #     return Float(float(_float))
 
     @attach('e : BOOLEAN')
     def const_bool(self, _bool):
-        if "false" in _bool or "False" in _bool:
+        if "false" in _bool:
             return(Boolean(False))
         return Boolean(True)
 
@@ -147,27 +170,27 @@ class MyParser(Parser):
         d[str(left)] = right
         return d  
 
-    @attach('e : LBRACE VARNAME COLON e COMMA e')
+    @attach('t : LBRACE VARNAME COLON t COMMA k')
     def recordtypehead(self, lbrace, left, assign, right, delim, tail):
         d = dict()
         d[str(left)] = right
         d.update(dict(tail))
         return RType(d)
 
-    @attach('e : VARNAME COLON e COMMA e')
-    def recordtypemidandVTYPEmid(self, left, assign, right, delim, tail):
+    @attach('k : VARNAME COLON t COMMA k')
+    def recordtypemid(self, left, assign, right, delim, tail):
         d = dict()
         d[str(left)] = right
         d.update(dict(tail))
         return d
 
-    @attach('e : VARNAME COLON e RBRACE')
+    @attach('k : VARNAME COLON t RBRACE')
     def recordtypetail(self, left, assign, right, rbrace):
         d = dict()
         d[str(left)] = right
         return d   
     
-    @attach('e : RBRACE')
+    @attach('k : RBRACE')
     def recordandrecordtypesignletail(self, rbrace):
         d = dict()
         return d   
@@ -176,25 +199,32 @@ class MyParser(Parser):
     def recordproj(self, record, brac, label, rbrac):
         return Proj(record, label)    
 
-    @attach('e : LHOOK VARNAME ASSIGN e RHOOK AS e SA')
+    @attach('e : LHOOK VARNAME ASSIGN e RHOOK AS t SA')
     def tag(self, lhook, label, assign, record, rhook, _as, varianttype, scol):
         return Tag(label, record, varianttype)  
 
 
-    @attach('e : LHOOK VARNAME COLON e COMMA e')
+    @attach('t : LHOOK VARNAME COLON t COMMA v')
     def vtypehead(self, lhook, label, colon, record, comma, tail):
         d = dict()
         d[str(label)] = record
         d.update(dict(tail))
         return VType(d)  
 
-    @attach('e : VARNAME COLON e RHOOK')
+    @attach('v : VARNAME COLON t COMMA v')
+    def vtypemid(self, left, assign, right, delim, tail):
+        d = dict()
+        d[str(left)] = right
+        d.update(dict(tail))
+        return d
+
+    @attach('v : VARNAME COLON t RHOOK')
     def vtypetail(self, label, colon, record, RHOOK):
         d = dict()
         d[str(label)] = record
         return d
 
-    @attach('e : RHOOK')
+    @attach('v : RHOOK')
     def vtypesingletail(self, label, colon, record, RHOOK):
         d = dict()
         return d   
@@ -224,35 +254,22 @@ class MyParser(Parser):
         s.add( Map(label, Var(varname), mapped_action) )
         return s
 
+
     @attach('e : FIX e' )
     def fix(self, fix, term):
         return Fix(term)
     
-    @attach('e : e OP e')
-    def condit(self, left, op, right):
-        if op == '<-':
-            return App(left, right)
-        if op == '->':
-            return CType(left, right)
-        if op == '<=':
-            return LE(left, right)
-        if op == '>=':
-            return GE(left, right)
-        if op == '==':
-            return EQ(left, right)
-        if op == '<':
-            return LT(left, right)
-        if op == '>':
-            return GT(left, right)
-        if op == "+":
-            return Plus(left, right)
-        if op == "-":
-            return Minus(left, right)
-        if op == "*":
-            return Times(left, right)
-        if op == "/":
-            return Div(left, right)
+    @attach('e : e APPLICATE e')
+    def applicate(self, left, op, right):
+        return App(left, right)
+    
+    @attach('t : t TYPEARROW t')
+    def ctype(self, left, op, right):
+        return CType(left, right)
 
+    @attach('t : LPAREN t TYPEARROW t RPAREN')
+    def ctypeparent(self, lpar, left, op, right, rpar):
+        return CType(left, right)
 
     @attach('e : STRING')
     def const_str(self, string):

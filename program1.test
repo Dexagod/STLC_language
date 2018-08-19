@@ -1,0 +1,80 @@
+eval 
+    \x:int.
+        x 
+    $ <- (succ 0) 
+;,
+
+eval 
+    \x:int.
+        x 
+    $ <- (succ succ succ 0) 
+;,
+
+eval 
+    \y:(int->int). 
+        y 
+    $ <- 
+        \x:int. 
+            x 
+        $ 
+;,
+
+eval 
+    (\y:(int->int).
+        \z:int.
+            y <- (y <- (succ z))
+        $ 
+    $ <- 
+        \x:int. 
+            succ x 
+        $)  <- 0
+;,
+
+eval 
+    \y:(int->int). 
+        \z:int.  
+            y <- z 
+        $ 
+    $ <- 
+        \x:int. 
+            x 
+        $ 
+        <- (succ succ succ succ succ 0)  
+;,
+
+eval 
+    iszero ( pred succ 0 )
+;,
+
+eval 
+    iszero ( pred pred succ pred succ 0 )
+;,
+
+eval 
+    if true 
+    then (succ 0)
+    else 0 
+    fi  
+;,
+
+eval 
+    if false 
+    then (succ 0)
+    else 0 
+    fi  
+;,
+
+eval 
+    if (iszero (0) )
+    then (succ 0)
+    else 0
+    fi  
+;,
+
+
+eval 
+    if (iszero (succ 0) )
+    then "Zeker waar!" 
+    else "Helemaal niet waar!"
+    fi 
+;

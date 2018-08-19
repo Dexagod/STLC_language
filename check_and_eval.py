@@ -6,6 +6,33 @@ def typecheck_exp(exp, context):
     
     exp_class = type(exp)
 
+    if exp_class == Zero:
+        return IntType()
+
+    if exp_class == Succ:
+        term_type = typecheck_exp(exp.value, context)
+        if type(term_type) != IntType:
+            string = str(exp.value) + " is not an integer type"
+            print(term_type)
+            raise Exception(string)
+        return IntType()
+
+    if exp_class == Pred:
+        term_type = typecheck_exp(exp.value, context)
+        if type(term_type) != IntType:
+            string = str(exp.value) + " is not an integer type"
+            print(term_type)
+            raise Exception(string)
+        return IntType()
+
+    if exp_class == ZeroTest:
+        term_type = typecheck_exp(exp.value, context)
+        if type(term_type) != IntType:
+            string = str(exp.value) + " is not an integer type"
+            print(term_type)
+            raise Exception(string)
+        return BoolType()
+
     if exp_class == Integer:
         return IntType()
 
@@ -151,6 +178,36 @@ def eval_exp(exp):
     # print("EVAL", exp)
     exp_class = type(exp)
 
+    if exp_class == Zero:
+        return exp
+
+    if exp_class == Succ:
+        # print("E-SUCC")
+        exp.value = evaluate_expression(exp.value)
+        return exp
+
+    if exp_class == Pred:
+        if type(exp.value) == Zero:
+            # print("E-PREDZERO")
+            return Zero(0)
+        if type(exp.value) == Succ:
+            # print("E-PREDSUCC")
+            return exp.value.value
+        else:
+            # print("E-PRED")
+            exp.value = evaluate_expression(exp.value)
+            return exp
+
+    if exp_class == ZeroTest:
+        # print("E-ISZERO")
+        exp.value = evaluate_expression(exp.value)
+        if type(exp.value) == Zero:
+            # print("E-ISZEROZERO")
+            return Boolean(True)
+        else:
+            # print("E-ISZEROSUCC")
+            return Boolean(False)
+
     if exp_class == Integer or exp_class == Float or exp_class == String or exp_class == Boolean:
         return exp
 
@@ -206,11 +263,11 @@ def eval_exp(exp):
 
     elif exp_class == If:
         if not issubclass(type(exp.get_cond()), Value):
-            cond_eval = eval_exp(exp.get_cond())
+            cond_eval = evaluate_expression(exp.get_cond())
             exp.cond = cond_eval
             return exp
         else:
-            cond_val = exp.get_cond()
+            cond_val = evaluate_expression(exp.get_cond())
             if type(cond_val) == Boolean:
                 if cond_val.is_true():
                     return exp.get_then()
@@ -219,35 +276,6 @@ def eval_exp(exp):
             else:
                 return exp
     
-    elif exp_class == Plus or exp_class == Minus or exp_class == Times or exp_class == Div:
-        if not (type(exp.left) == Integer or type(exp.left) == Float):
-            exp.left = eval_exp(exp.left)
-            return exp
-        if not (type(exp.right) == Integer or type(exp.right) == Float):
-            exp.right = eval_exp(exp.right)
-            return exp
-        return substitute_expression(exp)
-    
-
-    elif  exp_class == LT or exp_class == GT or exp_class == LE or exp_class == GE:
-        if not (type(exp.left) == Integer or type(exp.left) == Float):
-            exp.left = eval_exp(exp.left)
-            return exp
-        if not (type(exp.right) == Integer or type(exp.right) == Float):
-            exp.right = eval_exp(exp.right)
-            return exp
-        return substitute_expression(exp)
-
-    elif exp_class == EQ:
-        if not (type(exp.left) == Integer or type(exp.left) == Float or type(exp.left) == String or type(exp.left) == Boolean):
-            exp.left = eval_exp(exp.left)
-            return exp
-        if not (type(exp.right) == Integer or type(exp.right) == Float or type(exp.right) == String or type(exp.right) == Boolean):
-            exp.right = eval_exp(exp.right)
-            return exp
-        return substitute_expression(exp)
-
-
 
     #  NAKIJKEN OF VOLDOET AAN DE REGELS
     elif exp_class == App:
@@ -281,7 +309,6 @@ def eval_exp(exp):
                 return e_abs.get_value(e_arg)
             except Exception:
                 raise Exception("Record " + str(e_abs) + " does not contain label " + str(e_arg))
-            
 
         if type(e_abs) == Record:
             # print("E-PROJRCD")
@@ -354,6 +381,7 @@ def application_substitution(abstraction_body, abstraction_param, arg):
             s_body = application_substitution(abstraction_body.get_body(), abstraction_param, arg)
             abstraction_body.body = s_body
         return abstraction_body
+    
             
     elif type(abstraction_body) is App:
         # E-APP1, E-APP2
@@ -365,60 +393,29 @@ def application_substitution(abstraction_body, abstraction_param, arg):
         abstraction_body.arg = application_substitution(app_arg, abstraction_param, arg)
         return abstraction_body
     
-    elif type(abstraction_body) == Plus or type(abstraction_body) == Minus or type(abstraction_body) == Times or type(abstraction_body) == Div:
-        abstraction_body.left = application_substitution(abstraction_body.left, abstraction_param, arg)
-        abstraction_body.right = application_substitution(abstraction_body.right, abstraction_param, arg)
-        return abstraction_body
-
-    elif type(abstraction_body) == EQ or type(abstraction_body) == LT or type(abstraction_body) == GT or type(abstraction_body) == LE or type(abstraction_body) == GE:
-        abstraction_body.left = application_substitution(abstraction_body.left, abstraction_param, arg)
-        abstraction_body.right = application_substitution(abstraction_body.right, abstraction_param, arg)
-        return abstraction_body
-     
-    
     elif type(abstraction_body) is If:
         abstraction_body.cond = application_substitution(abstraction_body.cond, abstraction_param, arg)
         abstraction_body.then = application_substitution(abstraction_body.then, abstraction_param, arg)
         abstraction_body._else = application_substitution(abstraction_body._else, abstraction_param, arg)
         return abstraction_body
-
-def substitute_expression(exp):
-    expr_kind = type(exp)
-
-    if expr_kind == Plus:
-        newexp = copy.deepcopy(exp.left)
-        newexp.value = exp.left.value + exp.right.value
-        return newexp
-
-    if expr_kind == Minus:
-        newexp = copy.deepcopy(exp.left)
-        newexp.value = exp.left.value - exp.right.value
-        return newexp
-
-    if expr_kind == Times:
-        newexp = copy.deepcopy(exp.left)
-        newexp.value = exp.left.value * exp.right.value
-        return newexp
     
-    if expr_kind == Div:
-        if type(exp.left) == Integer:
-            return Integer(exp.left.value // exp.right.value)
-        return Float(exp.left.value / exp.right.value)
+    elif type(abstraction_body) == Succ:
+        abstraction_body.value = application_substitution(abstraction_body.value, abstraction_param, arg)
+        return abstraction_body
 
-    if expr_kind == EQ:
-        return Boolean(bool(exp.left.value == exp.right.value))
+    elif type(abstraction_body) == Pred:
+        abstraction_body.value = application_substitution(abstraction_body.value, abstraction_param, arg)
+        return abstraction_body
 
-    if expr_kind == LT:
-        return Boolean(bool(exp.left.value < exp.right.value))
+    elif type(abstraction_body) == ZeroTest:
+        abstraction_body.value = application_substitution(abstraction_body.value, abstraction_param, arg)
+        return abstraction_body
 
-    if expr_kind == GT:
-        return Boolean(bool(exp.left.value > exp.right.value))
-
-    if expr_kind == LE:
-        return Boolean(bool(exp.left.value <= exp.right.value))
-
-    if expr_kind == GE:
-        return Boolean(bool(exp.left.value >= exp.right.value))
+    elif type(abstraction_body) == Zero:
+        return abstraction_body
+    
+    else:
+        return abstraction_body
 
 def evaluate_expression(exp):
     exp_copy = copy.deepcopy(exp)
